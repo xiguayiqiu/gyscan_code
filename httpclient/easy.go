@@ -13,30 +13,35 @@ import (
 	"golang.org/x/net/html/charset"
 )
 
+// SimpleResponse 提供简单的响应访问接口，与 Python requests 体验一致
 type SimpleResponse struct {
-	statusCode int
-	headers    map[string]string
-	cookies    map[string]string
-	text       string
-	content    []byte
-	url        string
-	reason     string
-	ok         bool
-	encoding   string
+	statusCode int               // HTTP 状态码
+	headers    map[string]string // 响应头
+	cookies    map[string]string // Cookie
+	text       string            // 响应文本（已解码）
+	content    []byte            // 原始字节
+	url        string            // 最终 URL
+	reason     string            // 状态原因
+	ok         bool              // 是否 2xx 成功
+	encoding   string            // 检测到的编码
 }
 
+// StatusCode 返回 HTTP 状态码
 func (r *SimpleResponse) StatusCode() int {
 	return r.statusCode
 }
 
+// Text 返回响应文本
 func (r *SimpleResponse) Text() string {
 	return r.text
 }
 
+// Bytes 返回原始响应字节
 func (r *SimpleResponse) Bytes() []byte {
 	return r.content
 }
 
+// ContentType 返回 Content-Type 头
 func (r *SimpleResponse) ContentType() string {
 	if ct, ok := r.headers["Content-Type"]; ok {
 		return ct
@@ -44,6 +49,7 @@ func (r *SimpleResponse) ContentType() string {
 	return ""
 }
 
+// IsBinary 判断内容是否为二进制
 func (r *SimpleResponse) IsBinary() bool {
 	ct := r.ContentType()
 	binaryTypes := []string{
@@ -70,47 +76,58 @@ func (r *SimpleResponse) IsBinary() bool {
 	return false
 }
 
+// TextWithEncoding 使用指定编码解析响应文本
 func (r *SimpleResponse) TextWithEncoding(enc string) string {
 	text, _ := decodeBodyString(r.content, enc)
 	return text
 }
 
+// Ok 返回是否成功（2xx）
 func (r *SimpleResponse) Ok() bool {
 	return r.ok
 }
 
+// Url 返回最终请求 URL
 func (r *SimpleResponse) Url() string {
 	return r.url
 }
 
+// Reason 返回状态原因
 func (r *SimpleResponse) Reason() string {
 	return r.reason
 }
 
+// Headers 返回响应头
 func (r *SimpleResponse) Headers() map[string]string {
 	return r.headers
 }
 
+// Cookies 返回 Cookie
 func (r *SimpleResponse) Cookies() map[string]string {
 	return r.cookies
 }
 
+// Content 返回原始响应字节（别名）
 func (r *SimpleResponse) Content() []byte {
 	return r.content
 }
 
+// Encoding 返回检测到的编码
 func (r *SimpleResponse) Encoding() string {
 	return r.encoding
 }
 
+// Format 格式化 JSON 或 HTML 输出
 func (r *SimpleResponse) Format() string {
 	return Format(r.text)
 }
 
+// Save 保存响应内容到文件
 func (r *SimpleResponse) Save(filename string) error {
 	return SaveData(filename, r.content)
 }
 
+// SaveData 保存字节数据到文件
 func SaveData(filename string, data []byte) error {
 	if data == nil || len(data) == 0 {
 		return fmt.Errorf("save: no data to save")
@@ -124,10 +141,12 @@ func SaveData(filename string, data []byte) error {
 	return os.WriteFile(filename, data, 0644)
 }
 
+// SaveText 保存文本到文件
 func SaveText(filename string, text string) error {
 	return SaveData(filename, []byte(text))
 }
 
+// Download 下载 URL 内容到文件
 func Download(url string, filename string) error {
 	resp, err := FetchResponse(url)
 	if err != nil {
@@ -136,6 +155,7 @@ func Download(url string, filename string) error {
 	return resp.Save(filename)
 }
 
+// Save 下载 URL 内容到文件（别名）
 func Save(url string, filename string) error {
 	url = addProtocol(url)
 	resp, err := defaultSimple.GetResp(url)
@@ -145,6 +165,7 @@ func Save(url string, filename string) error {
 	return resp.Save(filename)
 }
 
+// Format 格式化 JSON 或 HTML 文本
 func Format(text string) string {
 	text = strings.TrimSpace(text)
 	if text == "" {
@@ -166,6 +187,7 @@ func Format(text string) string {
 	return text
 }
 
+// formatHTML 简化格式化 HTML
 func formatHTML(html string) string {
 	html = strings.TrimSpace(html)
 	if !strings.Contains(html, "<") {
@@ -209,6 +231,7 @@ func formatHTML(html string) string {
 	return output
 }
 
+// extractTagName 提取标签名
 func extractTagName(tag string) string {
 	tag = strings.TrimPrefix(tag, "<")
 	tag = strings.TrimPrefix(tag, "/")
@@ -220,6 +243,7 @@ func extractTagName(tag string) string {
 	return strings.ToLower(tag)
 }
 
+// isSelfClosingTag 判断是否自闭合标签
 func isSelfClosingTag(name string) bool {
 	selfClosing := map[string]bool{
 		"br": true, "hr": true, "img": true, "input": true,
@@ -230,6 +254,7 @@ func isSelfClosingTag(name string) bool {
 	return selfClosing[name]
 }
 
+// decodeBodyString 使用指定编码解码字节
 func decodeBodyString(body []byte, enc string) (string, error) {
 	reader, err := charset.NewReaderLabel(enc, bytes.NewReader(body))
 	if err != nil {
@@ -242,6 +267,7 @@ func decodeBodyString(body []byte, enc string) (string, error) {
 	return string(decoded), nil
 }
 
+// detectEncodingString 从响应头和内容检测编码
 func detectEncodingString(respHeaders map[string]string, body []byte) string {
 	for k, v := range respHeaders {
 		if strings.ToLower(k) == "content-type" {
@@ -259,8 +285,10 @@ func detectEncodingString(respHeaders map[string]string, body []byte) string {
 	return "utf-8"
 }
 
+// defaultSimple 默认的 Simple 客户端
 var defaultSimple = newSimpleClient()
 
+// newSimpleClient 创建新的 Simple 客户端
 func newSimpleClient() *Simple {
 	return &Simple{
 		timeout: 30 * time.Second,
@@ -270,45 +298,53 @@ func newSimpleClient() *Simple {
 	}
 }
 
+// Simple 提供简单链式 API，与 Python requests 体验一致
 type Simple struct {
-	timeout  time.Duration
-	proxy    string
-	ua       string
-	encoding string
-	headers  map[string]string
-	cookies  map[string]string
+	timeout  time.Duration     // 超时
+	proxy    string            // 代理
+	ua       string            // User-Agent
+	encoding string            // 编码
+	headers  map[string]string // 请求头
+	cookies  map[string]string // Cookie
 }
 
+// Timeout 设置超时
 func (s *Simple) Timeout(d time.Duration) *Simple {
 	s.timeout = d
 	return s
 }
 
+// Proxy 设置代理
 func (s *Simple) Proxy(p string) *Simple {
 	s.proxy = p
 	return s
 }
 
+// UA 设置 User-Agent
 func (s *Simple) UA(u string) *Simple {
 	s.ua = u
 	return s
 }
 
+// Encoding 设置编码
 func (s *Simple) Encoding(enc string) *Simple {
 	s.encoding = enc
 	return s
 }
 
+// Header 设置请求头
 func (s *Simple) Header(key, value string) *Simple {
 	s.headers[key] = value
 	return s
 }
 
+// Cookie 设置 Cookie
 func (s *Simple) Cookie(key, value string) *Simple {
 	s.cookies[key] = value
 	return s
 }
 
+// Cookies 设置多个 Cookie
 func (s *Simple) Cookies(m map[string]string) *Simple {
 	for k, v := range m {
 		s.cookies[k] = v
@@ -316,51 +352,62 @@ func (s *Simple) Cookies(m map[string]string) *Simple {
 	return s
 }
 
+// Get 发送 GET 请求
 func (s *Simple) Get(url string) *SimpleResponse {
 	resp, _ := s.GetResp(url)
 	return resp
 }
 
+// Post 发送 POST 请求
 func (s *Simple) Post(url string, data interface{}) *SimpleResponse {
 	resp, _ := s.PostResp(url, data)
 	return resp
 }
 
+// Put 发送 PUT 请求
 func (s *Simple) Put(url string, data interface{}) *SimpleResponse {
 	resp, _ := s.PutResp(url, data)
 	return resp
 }
 
+// Delete 发送 DELETE 请求
 func (s *Simple) Delete(url string) *SimpleResponse {
 	resp, _ := s.DeleteResp(url)
 	return resp
 }
 
+// Head 发送 HEAD 请求
 func (s *Simple) Head(url string) *SimpleResponse {
 	resp, _ := s.HeadResp(url)
 	return resp
 }
 
+// GetResp 发送 GET 请求并返回响应对象和错误
 func (s *Simple) GetResp(url string) (*SimpleResponse, error) {
 	return s.do("GET", url, nil)
 }
 
+// PostResp 发送 POST 请求并返回响应对象和错误
 func (s *Simple) PostResp(url string, data interface{}) (*SimpleResponse, error) {
 	return s.do("POST", url, data)
 }
 
+// PutResp 发送 PUT 请求并返回响应对象和错误
 func (s *Simple) PutResp(url string, data interface{}) (*SimpleResponse, error) {
 	return s.do("PUT", url, data)
 }
 
+// DeleteResp 发送 DELETE 请求并返回响应对象和错误
 func (s *Simple) DeleteResp(url string) (*SimpleResponse, error) {
 	return s.do("DELETE", url, nil)
 }
 
+// HeadResp 发送 HEAD 请求并返回响应对象和错误
 func (s *Simple) HeadResp(url string) (*SimpleResponse, error) {
 	return s.do("HEAD", url, nil)
 }
 
+// do 执行 HTTP 请求
 func (s *Simple) do(method, url string, data interface{}) (*SimpleResponse, error) {
 	url = addProtocol(url)
 
@@ -426,6 +473,7 @@ func (s *Simple) do(method, url string, data interface{}) (*SimpleResponse, erro
 	}, nil
 }
 
+// Fetch 获取 URL 内容，自动识别二进制
 func Fetch(url string) []byte {
 	url = addProtocol(url)
 	resp, _ := defaultSimple.GetResp(url)
@@ -435,12 +483,14 @@ func Fetch(url string) []byte {
 	return []byte(resp.Text())
 }
 
+// FetchText 获取 URL 内容，返回文本
 func FetchText(url string) string {
 	url = addProtocol(url)
 	resp, _ := defaultSimple.GetResp(url)
 	return resp.Text()
 }
 
+// addProtocol 为 URL 缺少协议时添加 https://
 func addProtocol(url string) string {
 	if url == "" {
 		return "https://"
@@ -452,10 +502,12 @@ func addProtocol(url string) string {
 	return url
 }
 
+// FetchResponse 获取响应对象
 func FetchResponse(url string) (*SimpleResponse, error) {
 	return defaultSimple.GetResp(url)
 }
 
+// SimpleClient 创建一个新的 Simple 客户端
 func SimpleClient() *Simple {
 	return newSimpleClient()
 }

@@ -1,19 +1,30 @@
-# gyscan_code
+# gyscan\_code
 
 Go 语言编写的网络安全开发库，支持 Windows、macOS 和 Linux 平台，采用模块化设计。
 
-[![Go Version](https://img.shields.io/badge/Go-1.26%2B-blue)](https://go.dev/)
-[![License](https://img.shields.io/badge/License-Apache%202.0-green)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)]()
-### 这个Go语言库希望有更多的Go开发者，与我共同开发这个开发库！欢迎`issues` ~~
+[!\[Go Version\](https://img.shields.io/badge/Go-1.26%2B-blue null)](https://go.dev/)
+[!\[License\](https://img.shields.io/badge/License-Apache%202.0-green null)](LICENSE)
+[!\[Platform\](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey null)]()
+
+### 这个Go语言库希望有更多的Go开发者，与我共同开发这个开发库！欢迎`issues` \~\~
+
 ## 安装
 
 ```bash
 go get github.com/xiguayiqiu/gyscan_code
 ```
+
 ## 文档位置
 
-### 通过以下位置即可看到每个库的使用方法，后续本作者会补齐`gyscan_code`的goDoc的~
+### 通过以下位置即可看到每个库的使用方法，后续本作者会补齐`gyscan_code`的goDoc的\~
+
+- Windows
+
+```bash
+C:\User\用户名\go\pkg\mod\github.com\xiguayiqiu\gyscan_code@哈希校验码\docs
+```
+
+- Linux
 ```bash
 ~/go/pkg/mod/github.com/xiguayiqiu/gyscan_code@哈希校验码/docs/
 ```
@@ -32,7 +43,7 @@ go get github.com/xiguayiqiu/gyscan_code
 | [utils](#utils)           | 通用工具函数（进度条等）                | —               |
 | [webshell](#webshell)     | Webshell 生成与上传              | —               |
 
----
+***
 
 ## ano
 
@@ -75,15 +86,15 @@ pkts, _ := ano.Sniff("eth0", 10*time.Second, 100)
 
 ### 对比 Scapy
 
-| Scapy (Python) | ano (Go) |
-|----------------|----------|
-| `Ether()/IP()/TCP(flags="S")` | `Build(Ether, IPv4, TCP.SetFlags(TCP_SYN))` |
-| `interact()` | `ShellCode()` |
-| `sniff(iface="eth0", count=10)` | `Sniff("eth0", timeout, 10)` |
-| `rdpcap("file.pcap")` | `LoadPcap("file.pcap")` |
-| `fuzz(pkt)` | `FuzzPacket(pkt, nil)` |
+| Scapy (Python)                  | ano (Go)                                    |
+| ------------------------------- | ------------------------------------------- |
+| `Ether()/IP()/TCP(flags="S")`   | `Build(Ether, IPv4, TCP.SetFlags(TCP_SYN))` |
+| `interact()`                    | `ShellCode()`                               |
+| `sniff(iface="eth0", count=10)` | `Sniff("eth0", timeout, 10)`                |
+| `rdpcap("file.pcap")`           | `LoadPcap("file.pcap")`                     |
+| `fuzz(pkt)`                     | `FuzzPacket(pkt, nil)`                      |
 
----
+***
 
 ## api
 
@@ -116,11 +127,11 @@ api.SaveReport("example.com", result.Endpoints, "report.json")
 
 ### 三条发现路径
 
-| 路径 | 置信度 | 说明 |
-|------|--------|------|
-| 被动流量分析 | 1.0 | 从 PCAP/日志中提取真实调用的端点 |
+| 路径     | 置信度 | 说明                    |
+| ------ | --- | --------------------- |
+| 被动流量分析 | 1.0 | 从 PCAP/日志中提取真实调用的端点   |
 | 前端代码解析 | 0.8 | 从 JS/TS/HTML 中提取硬编码路径 |
-| 主动探测 | 0.6 | 基于已知端点生成候选 URL 并验证 |
+| 主动探测   | 0.6 | 基于已知端点生成候选 URL 并验证    |
 
 ### 核心特性
 
@@ -132,7 +143,7 @@ api.SaveReport("example.com", result.Endpoints, "report.json")
 - **HTTP 实时探测**：端点验证 + 认证绕过测试
 - **一键发现**：`DiscoverPcap` / `DiscoverJS` / `QuickScan` 等便捷函数
 
----
+***
 
 ## httpclient
 
@@ -174,7 +185,7 @@ resp = httpclient.SimpleClient().
 - **格式化输出**：JSON/HTML 美化
 - **与 Python requests 几乎一致的使用体验**
 
----
+***
 
 ## passwd
 
@@ -210,7 +221,7 @@ passwd.Capitalize("hello")   // "Hello"
 passwd.Reverse("hello")      // "olleh"
 ```
 
----
+***
 
 ## scanner
 
@@ -249,7 +260,7 @@ results := scanner.NewPortScanner().
     Scan()
 ```
 
----
+***
 
 ## secjson
 
@@ -288,7 +299,7 @@ fmt.Println(report)
 - **6 条合规规则**：PCI-DSS/GDPR/等保2.0/数据安全法自动化检查
 - **4 类脱敏验证**：身份/金融/凭证/隐私脱敏质量评分（0-90 分）
 
----
+***
 
 ## sqlexp
 
@@ -331,17 +342,17 @@ requests := e.BuildRequests()   // URL 编码后的完整请求
 
 ### Payload 覆盖
 
-| 注入方法 | 数据库 | 覆盖技术 |
-|---------|--------|---------|
-| 报错注入 | MySQL/PG/MSSQL/Oracle/SQLite | EXTRACTVALUE/CAST/CONVERT 等 |
-| Union 注入 | MySQL/PG/MSSQL | 列数探测、information_schema/pg_catalog 枚举 |
-| 布尔盲注 | MySQL/MSSQL | 真假条件、SUBSTRING/ASCII 提取 |
-| 延时盲注 | MySQL/PG/MSSQL/Oracle/SQLite | SLEEP/pg_sleep/WAITFOR/DBMS_LOCK |
-| 堆叠查询 | MySQL/MSSQL/PG | INSERT/DELETE/WRITE/xp_cmdshell |
-| OOB 外带 | MySQL/MSSQL/Oracle/PG | LOAD_FILE/xp_dirtree/UTL_HTTP |
-| WAF 绕过 | 8 种策略 | 内联注释/大小写/URL编码/Hex/空白/关键字拆分等 |
+| 注入方法     | 数据库                          | 覆盖技术                                    |
+| -------- | ---------------------------- | --------------------------------------- |
+| 报错注入     | MySQL/PG/MSSQL/Oracle/SQLite | EXTRACTVALUE/CAST/CONVERT 等             |
+| Union 注入 | MySQL/PG/MSSQL               | 列数探测、information\_schema/pg\_catalog 枚举 |
+| 布尔盲注     | MySQL/MSSQL                  | 真假条件、SUBSTRING/ASCII 提取                 |
+| 延时盲注     | MySQL/PG/MSSQL/Oracle/SQLite | SLEEP/pg\_sleep/WAITFOR/DBMS\_LOCK      |
+| 堆叠查询     | MySQL/MSSQL/PG               | INSERT/DELETE/WRITE/xp\_cmdshell        |
+| OOB 外带   | MySQL/MSSQL/Oracle/PG        | LOAD\_FILE/xp\_dirtree/UTL\_HTTP        |
+| WAF 绕过   | 8 种策略                        | 内联注释/大小写/URL编码/Hex/空白/关键字拆分等            |
 
----
+***
 
 ## utils
 
@@ -377,7 +388,7 @@ utils.ProgressColor(current, total)
 utils.ProgressCyber(current, total)
 ```
 
----
+***
 
 ## webshell
 
@@ -408,7 +419,7 @@ webshell.UploadWithField("http://target.com/upload.php", code, "shell.php", "fil
 webshell.UploadViaPUT("http://target.com/shell.php", code)
 ```
 
----
+***
 
 ## 测试说明
 

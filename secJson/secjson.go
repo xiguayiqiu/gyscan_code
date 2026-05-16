@@ -65,12 +65,12 @@ type ComplianceIssue struct {
 }
 
 type Config struct {
-	StrictMode   bool
-	MinSeverity  Severity
-	MaxDepth     int
-	SkipFields   []string
-	CustomRules  []CustomRule
-	ContextPath  string
+	StrictMode  bool
+	MinSeverity Severity
+	MaxDepth    int
+	SkipFields  []string
+	CustomRules []CustomRule
+	ContextPath string
 }
 
 type CustomRule struct {

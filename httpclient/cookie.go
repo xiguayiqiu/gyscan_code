@@ -6,16 +6,19 @@ import (
 	"strings"
 )
 
+// CookieJar Cookie 存储
 type CookieJar struct {
 	cookies map[string]map[string]*http.Cookie
 }
 
+// NewCookieJar 创建新的 CookieJar
 func NewCookieJar() *CookieJar {
 	return &CookieJar{
 		cookies: make(map[string]map[string]*http.Cookie),
 	}
 }
 
+// Set 设置 Cookie
 func (j *CookieJar) Set(u *url.URL, cookie *http.Cookie) {
 	key := cookieKey(u)
 	if j.cookies[key] == nil {
@@ -24,6 +27,7 @@ func (j *CookieJar) Set(u *url.URL, cookie *http.Cookie) {
 	j.cookies[key][cookie.Name] = cookie
 }
 
+// Get 获取 Cookie
 func (j *CookieJar) Get(u *url.URL, name string) *http.Cookie {
 	key := cookieKey(u)
 	if j.cookies[key] == nil {
@@ -32,6 +36,7 @@ func (j *CookieJar) Get(u *url.URL, name string) *http.Cookie {
 	return j.cookies[key][name]
 }
 
+// All 获取所有 Cookie
 func (j *CookieJar) All(u *url.URL) []*http.Cookie {
 	key := cookieKey(u)
 	var result []*http.Cookie
@@ -44,6 +49,7 @@ func (j *CookieJar) All(u *url.URL) []*http.Cookie {
 	return result
 }
 
+// Remove 删除 Cookie
 func (j *CookieJar) Remove(u *url.URL, name string) {
 	key := cookieKey(u)
 	if j.cookies[key] != nil {
@@ -51,10 +57,12 @@ func (j *CookieJar) Remove(u *url.URL, name string) {
 	}
 }
 
+// Clear 清空所有 Cookie
 func (j *CookieJar) Clear() {
 	j.cookies = make(map[string]map[string]*http.Cookie)
 }
 
+// ExportString 导出 Cookie 为字符串格式
 func (j *CookieJar) ExportString(u *url.URL) string {
 	key := cookieKey(u)
 	var parts []string
@@ -66,6 +74,7 @@ func (j *CookieJar) ExportString(u *url.URL) string {
 	return strings.Join(parts, "; ")
 }
 
+// ExportHeader 导出 Cookie 为 HTTP 头部格式
 func (j *CookieJar) ExportHeader(u *url.URL) string {
 	parts := j.ExportString(u)
 	if parts == "" {
@@ -74,6 +83,7 @@ func (j *CookieJar) ExportHeader(u *url.URL) string {
 	return "Cookie: " + parts
 }
 
+// ImportString 从字符串导入 Cookie
 func (j *CookieJar) ImportString(u *url.URL, cookieStr string) {
 	parts := strings.Split(cookieStr, ";")
 	for _, part := range parts {
@@ -91,12 +101,14 @@ func (j *CookieJar) ImportString(u *url.URL, cookieStr string) {
 	}
 }
 
+// ImportCookies 从 []*http.Cookie 导入 Cookie
 func (j *CookieJar) ImportCookies(u *url.URL, cookies []*http.Cookie) {
 	for _, c := range cookies {
 		j.Set(u, c)
 	}
 }
 
+// ToMap 导出 Cookie 为 map[string]string
 func (j *CookieJar) ToMap(u *url.URL) map[string]string {
 	key := cookieKey(u)
 	result := make(map[string]string)
@@ -108,6 +120,7 @@ func (j *CookieJar) ToMap(u *url.URL) map[string]string {
 	return result
 }
 
+// cookieKey 生成 Cookie 存储键
 func cookieKey(u *url.URL) string {
 	return u.Scheme + "://" + u.Host
 }

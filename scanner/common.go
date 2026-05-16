@@ -52,26 +52,26 @@ func (r Result) String() string {
 }
 
 type ScannerConfig struct {
-	Threads     int
-	Timeout     time.Duration
-	FollowRedirects bool
+	Threads            int
+	Timeout            time.Duration
+	FollowRedirects    bool
 	InsecureSkipVerify bool
-	Proxy       string
-	UserAgent   string
-	Delay       time.Duration
-	Retries     int
-	StatusCodes []int
-	ExcludeCodes []int
+	Proxy              string
+	UserAgent          string
+	Delay              time.Duration
+	Retries            int
+	StatusCodes        []int
+	ExcludeCodes       []int
 }
 
 func DefaultConfig() *ScannerConfig {
 	return &ScannerConfig{
-		Threads:          50,
-		Timeout:          10 * time.Second,
-		FollowRedirects:  false,
+		Threads:            50,
+		Timeout:            10 * time.Second,
+		FollowRedirects:    false,
 		InsecureSkipVerify: false,
-		Retries:          0,
-		StatusCodes:      []int{200, 201, 204, 301, 302, 303, 307, 308},
+		Retries:            0,
+		StatusCodes:        []int{200, 201, 204, 301, 302, 303, 307, 308},
 	}
 }
 

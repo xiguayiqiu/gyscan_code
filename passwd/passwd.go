@@ -6,11 +6,11 @@ import (
 )
 
 const (
-	lowercase = "abcdefghijklmnopqrstuvwxyz"
-	uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	digits    = "0123456789"
+	lowercase    = "abcdefghijklmnopqrstuvwxyz"
+	uppercase    = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	digits       = "0123456789"
 	specialChars = "!@#$%^&*()-_=+[]{}|;:,.<>?/~"
-	ambiguous = "il1Lo0O"
+	ambiguous    = "il1Lo0O"
 )
 
 func Generate(length int) string {

@@ -6,30 +6,32 @@ import (
 	"strings"
 )
 
+// BrowserProfile 浏览器配置文件
 type BrowserProfile struct {
-	Name                 string
-	UserAgent            string
-	Platform             string
-	Accept               string
-	AcceptLanguage       string
-	AcceptEncoding       string
-	CacheControl         string
-	SecFetchDest         string
-	SecFetchMode         string
-	SecFetchSite         string
-	SecFetchUser         string
-	UpgradeInsecure      string
-	Connection           string
-	SecChUa              string
-	SecChUaMobile        string
-	SecChUaPlatform      string
-	Pragma               string
-	DNT                  string
-	TE                   string
-	ViewportWidth        string
-	ExtraHeaders         map[string]string
+	Name            string
+	UserAgent       string
+	Platform        string
+	Accept          string
+	AcceptLanguage  string
+	AcceptEncoding  string
+	CacheControl    string
+	SecFetchDest    string
+	SecFetchMode    string
+	SecFetchSite    string
+	SecFetchUser    string
+	UpgradeInsecure string
+	Connection      string
+	SecChUa         string
+	SecChUaMobile   string
+	SecChUaPlatform string
+	Pragma          string
+	DNT             string
+	TE              string
+	ViewportWidth   string
+	ExtraHeaders    map[string]string
 }
 
+// Headers 生成 HTTP 头
 func (p *BrowserProfile) Headers() http.Header {
 	h := make(http.Header)
 
@@ -71,6 +73,7 @@ func (p *BrowserProfile) Headers() http.Header {
 	return h
 }
 
+// Apply 将浏览器配置应用到请求
 func (p *BrowserProfile) Apply(r *Request) {
 	h := p.Headers()
 	for k, vs := range h {
@@ -80,12 +83,14 @@ func (p *BrowserProfile) Apply(r *Request) {
 	}
 }
 
+// AsSession 创建一个使用该浏览器配置的会话
 func (p *BrowserProfile) AsSession() *Session {
 	s := NewSession()
 	p.ApplySession(s)
 	return s
 }
 
+// ApplySession 将浏览器配置应用到会话
 func (p *BrowserProfile) ApplySession(s *Session) {
 	h := p.Headers()
 	for k, vs := range h {
@@ -95,12 +100,14 @@ func (p *BrowserProfile) ApplySession(s *Session) {
 	}
 }
 
+// WithProfile 创建使用指定浏览器配置的请求选项
 func WithProfile(p *BrowserProfile) RequestOption {
 	return func(r *Request) {
 		p.Apply(r)
 	}
 }
 
+// WithProfileHeaders 创建使用指定浏览器配置和额外头的请求选项
 func WithProfileHeaders(p *BrowserProfile, extra map[string]string) RequestOption {
 	return func(r *Request) {
 		p.Apply(r)
@@ -110,13 +117,14 @@ func WithProfileHeaders(p *BrowserProfile, extra map[string]string) RequestOptio
 	}
 }
 
+// ChromeProfile Chrome 浏览器配置
 func ChromeProfile() *BrowserProfile {
 	return &BrowserProfile{
-		Name: "Chrome",
-		UserAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-		Platform:  "Windows",
-		Accept:    "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-		AcceptLanguage: "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
+		Name:            "Chrome",
+		UserAgent:       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+		Platform:        "Windows",
+		Accept:          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+		AcceptLanguage:  "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
 		AcceptEncoding:  "gzip, deflate, br, zstd",
 		CacheControl:    "max-age=0",
 		SecFetchDest:    "document",
@@ -132,6 +140,7 @@ func ChromeProfile() *BrowserProfile {
 	}
 }
 
+// FirefoxProfile Firefox 浏览器配置
 func FirefoxProfile() *BrowserProfile {
 	return &BrowserProfile{
 		Name:            "Firefox",
@@ -152,6 +161,7 @@ func FirefoxProfile() *BrowserProfile {
 	}
 }
 
+// SafariProfile Safari 浏览器配置
 func SafariProfile() *BrowserProfile {
 	return &BrowserProfile{
 		Name:            "Safari",
@@ -170,13 +180,14 @@ func SafariProfile() *BrowserProfile {
 	}
 }
 
+// EdgeProfile Edge 浏览器配置
 func EdgeProfile() *BrowserProfile {
 	return &BrowserProfile{
-		Name: "Edge",
-		UserAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0",
-		Platform:  "Windows",
-		Accept:    "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-		AcceptLanguage: "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
+		Name:            "Edge",
+		UserAgent:       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0",
+		Platform:        "Windows",
+		Accept:          "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+		AcceptLanguage:  "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
 		AcceptEncoding:  "gzip, deflate, br, zstd",
 		CacheControl:    "max-age=0",
 		SecFetchDest:    "document",
@@ -191,10 +202,11 @@ func EdgeProfile() *BrowserProfile {
 	}
 }
 
+// MobileChromeProfile 移动端 Chrome 浏览器配置
 func MobileChromeProfile() *BrowserProfile {
 	return &BrowserProfile{
 		Name:            "MobileChrome",
-		UserAgent:       "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.53 Mobile Safari/537.36",
+		UserAgent:       "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36",
 		Platform:        "Android",
 		Accept:          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
 		AcceptLanguage:  "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
@@ -213,6 +225,7 @@ func MobileChromeProfile() *BrowserProfile {
 	}
 }
 
+// IPhoneProfile iPhone Safari 浏览器配置
 func IPhoneProfile() *BrowserProfile {
 	return &BrowserProfile{
 		Name:            "iPhone",
@@ -232,6 +245,7 @@ func IPhoneProfile() *BrowserProfile {
 	}
 }
 
+// profiles 所有可用浏览器配置
 var profiles = []*BrowserProfile{
 	ChromeProfile(),
 	FirefoxProfile(),
@@ -241,10 +255,12 @@ var profiles = []*BrowserProfile{
 	IPhoneProfile(),
 }
 
+// RandomProfile 随机获取一个浏览器配置
 func RandomProfile() *BrowserProfile {
 	return profiles[rand.IntN(len(profiles))]
 }
 
+// ProfileByName 根据名称获取浏览器配置
 func ProfileByName(name string) *BrowserProfile {
 	lower := strings.ToLower(name)
 	for _, p := range profiles {

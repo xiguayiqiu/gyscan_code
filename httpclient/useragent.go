@@ -7,55 +7,60 @@ import (
 	"strings"
 )
 
+// DeviceType 设备类型
 type DeviceType int
 
 const (
-	DeviceDesktop DeviceType = iota
-	DeviceMobile
-	DeviceTablet
-	DeviceBot
-	DeviceAPI
+	DeviceDesktop DeviceType = iota // 桌面设备
+	DeviceMobile                   // 移动设备
+	DeviceTablet                   // 平板设备
+	DeviceBot                      // 爬虫
+	DeviceAPI                      // API客户端
 )
 
+// OS 操作系统类型
 type OS int
 
 const (
-	OSWindows OS = iota
-	OSMacOS
-	OSLinux
-	OSAndroid
-	OSIOS
-	OSUnknown
+	OSWindows OS = iota // Windows
+	OSMacOS             // macOS
+	OSLinux              // Linux
+	OSAndroid            // Android
+	OSIOS                // iOS
+	OSUnknown            // 未知系统
 )
 
+// Browser 浏览器类型
 type Browser int
 
 const (
-	BrowserChrome Browser = iota
-	BrowserFirefox
-	BrowserSafari
-	BrowserEdge
-	BrowserOpera
-	BrowserBrave
-	BrowserIE
-	BrowserBot
-	BrowserAPIClient
-	BrowserUnknown
+	BrowserChrome Browser = iota // Chrome
+	BrowserFirefox             // Firefox
+	BrowserSafari               // Safari
+	BrowserEdge                 // Edge
+	BrowserOpera                // Opera
+	BrowserBrave                // Brave
+	BrowserIE                   // Internet Explorer
+	BrowserBot                  // 爬虫浏览器
+	BrowserAPIClient            // API客户端
+	BrowserUnknown              // 未知浏览器
 )
 
+// UAInfo 用户代理信息
 type UAInfo struct {
-	Browser    Browser
-	BrowserStr string
-	Version    string
-	OS         OS
-	OSStr      string
-	Platform   string
-	Device     string
-	DeviceType DeviceType
-	IsMobile   bool
-	IsBot      bool
+	Browser    Browser    // 浏览器类型
+	BrowserStr string     // 浏览器名称
+	Version    string     // 浏览器版本
+	OS         OS         // 操作系统类型
+	OSStr      string     // 操作系统名称
+	Platform   string     // 平台
+	Device     string     // 设备
+	DeviceType DeviceType // 设备类型
+	IsMobile   bool       // 是否为移动端
+	IsBot      bool       // 是否为爬虫
 }
 
+// Parse 解析 User-Agent 字符串
 func Parse(ua string) *UAInfo {
 	info := &UAInfo{DeviceType: DeviceDesktop}
 
@@ -172,6 +177,7 @@ func Parse(ua string) *UAInfo {
 	return info
 }
 
+// extractVersion 从 User-Agent 中提取版本号
 func extractVersion(ua, name string) string {
 	regex := regexp.MustCompile(name + `/(\d+[\.\d]*)`)
 	matches := regex.FindStringSubmatch(ua)
@@ -186,6 +192,7 @@ func extractVersion(ua, name string) string {
 	return ""
 }
 
+// extractDevice 从 User-Agent 中提取设备信息
 func extractDevice(ua, defaultName string) string {
 	if strings.Contains(ua, "Pixel") {
 		return "Google Pixel"
@@ -211,6 +218,7 @@ func extractDevice(ua, defaultName string) string {
 	return defaultName
 }
 
+// extractMacOSVersion 从 User-Agent 中提取 macOS 版本
 func extractMacOSVersion(ua string) string {
 	regex := regexp.MustCompile(`Mac OS X (\d+[_\.\d]*)`)
 	matches := regex.FindStringSubmatch(ua)
@@ -221,6 +229,7 @@ func extractMacOSVersion(ua string) string {
 	return "macOS"
 }
 
+// desktopUAs 桌面端 User-Agent 列表
 var desktopUAs = []string{
 	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
 	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
@@ -263,6 +272,7 @@ var desktopUAs = []string{
 	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Brave/1.65.76",
 }
 
+// mobileUAs 移动端 User-Agent 列表
 var mobileUAs = []string{
 	"Mozilla/5.0 (iPhone; CPU iPhone OS 17_5_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1",
 	"Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1",
@@ -305,6 +315,7 @@ var mobileUAs = []string{
 	"Mozilla/5.0 (Linux; Android 14; V2204) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
 }
 
+// botUAs 爬虫 User-Agent 列表
 var botUAs = []string{
 	"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
 	"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
@@ -324,6 +335,7 @@ var botUAs = []string{
 	"Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; GPTBot/1.0; +https://openai.com/gptbot)",
 }
 
+// apiClientUAs API 客户端 User-Agent 列表
 var apiClientUAs = []string{
 	"python-requests/2.31.0",
 	"python-requests/2.32.0",
@@ -342,55 +354,66 @@ var apiClientUAs = []string{
 	"Insomnia/2023.5.0",
 }
 
+// RandomDesktop 随机获取桌面端 User-Agent
 func RandomDesktop() string {
 	return desktopUAs[rand.IntN(len(desktopUAs))]
 }
 
+// RandomMobile 随机获取移动端 User-Agent
 func RandomMobile() string {
 	return mobileUAs[rand.IntN(len(mobileUAs))]
 }
 
+// RandomBot 随机获取爬虫 User-Agent
 func RandomBot() string {
 	return botUAs[rand.IntN(len(botUAs))]
 }
 
+// RandomAPIClient 随机获取 API 客户端 User-Agent
 func RandomAPIClient() string {
 	return apiClientUAs[rand.IntN(len(apiClientUAs))]
 }
 
+// Random 随机获取任意类型 User-Agent
 func Random() string {
 	all := append(append(append([]string{}, desktopUAs...), mobileUAs...), botUAs...)
 	return all[rand.IntN(len(all))]
 }
 
+// RandomUserAgent 随机获取任意类型 User-Agent（别名）
 func RandomUserAgent() string {
 	return Random()
 }
 
+// AllDesktop 获取所有桌面端 User-Agent
 func AllDesktop() []string {
 	result := make([]string, len(desktopUAs))
 	copy(result, desktopUAs)
 	return result
 }
 
+// AllMobile 获取所有移动端 User-Agent
 func AllMobile() []string {
 	result := make([]string, len(mobileUAs))
 	copy(result, mobileUAs)
 	return result
 }
 
+// AllBot 获取所有爬虫 User-Agent
 func AllBot() []string {
 	result := make([]string, len(botUAs))
 	copy(result, botUAs)
 	return result
 }
 
+// AllAPIClient 获取所有 API 客户端 User-Agent
 func AllAPIClient() []string {
 	result := make([]string, len(apiClientUAs))
 	copy(result, apiClientUAs)
 	return result
 }
 
+// RandomByBrowser 根据浏览器类型随机获取 User-Agent
 func RandomByBrowser(browser string) string {
 	browser = strings.ToLower(browser)
 	var pool []string
@@ -418,6 +441,7 @@ func RandomByBrowser(browser string) string {
 	return pool[rand.IntN(len(pool))]
 }
 
+// RandomByOS 根据操作系统随机获取 User-Agent
 func RandomByOS(os string) string {
 	os = strings.ToLower(os)
 	var pool []string
@@ -443,6 +467,7 @@ func RandomByOS(os string) string {
 	return pool[rand.IntN(len(pool))]
 }
 
+// RandomByDevice 根据设备类型随机获取 User-Agent
 func RandomByDevice(device string) string {
 	device = strings.ToLower(device)
 	var pool []string
@@ -466,6 +491,7 @@ func RandomByDevice(device string) string {
 	return pool[rand.IntN(len(pool))]
 }
 
+// filterUAs 过滤 User-Agent 列表
 func filterUAs(pool []string, keyword string) []string {
 	var result []string
 	for _, ua := range pool {
@@ -476,6 +502,7 @@ func filterUAs(pool []string, keyword string) []string {
 	return result
 }
 
+// Chrome 获取 Chrome 浏览器 User-Agent
 func Chrome(versions ...int) string {
 	versionMap := map[int]string{
 		126: "126.0.0.0",
@@ -500,6 +527,7 @@ func Chrome(versions ...int) string {
 	return "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/" + ver + " Safari/537.36"
 }
 
+// Firefox 获取 Firefox 浏览器 User-Agent
 func Firefox(version int, os string) string {
 	versionMap := map[int]string{
 		126: "126.0",
@@ -536,6 +564,7 @@ func Firefox(version int, os string) string {
 	return "Mozilla/5.0 (" + osStr + " rv:" + ver + ") Gecko/20100101 Firefox/" + ver
 }
 
+// Safari 获取 Safari 浏览器 User-Agent
 func Safari(version int) string {
 	v := 17
 	if version > 0 {
@@ -544,6 +573,7 @@ func Safari(version int) string {
 	return "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/" + strconv.Itoa(v) + ".4.1 Safari/605.1.15"
 }
 
+// Edge 获取 Edge 浏览器 User-Agent
 func Edge(version int) string {
 	versionMap := map[int]string{
 		126: "126.0.0.0",
@@ -566,6 +596,7 @@ func Edge(version int) string {
 	return "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/" + ver + " Safari/537.36 Edg/" + ver
 }
 
+// Opera 获取 Opera 浏览器 User-Agent
 func Opera(version int) string {
 	v := 111
 	if version > 0 {
@@ -574,6 +605,7 @@ func Opera(version int) string {
 	return "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 OPR/" + strconv.Itoa(v) + ".0.0"
 }
 
+// iPhone 获取 iPhone 设备 User-Agent
 func iPhone(osVersion int) string {
 	v := 17
 	if osVersion > 0 {
@@ -582,6 +614,7 @@ func iPhone(osVersion int) string {
 	return "Mozilla/5.0 (iPhone; CPU iPhone OS " + strconv.Itoa(v) + "_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/" + strconv.Itoa(v) + ".4 Mobile/15E148 Safari/604.1"
 }
 
+// iPad 获取 iPad 设备 User-Agent
 func iPad(osVersion int) string {
 	v := 17
 	if osVersion > 0 {
@@ -590,6 +623,7 @@ func iPad(osVersion int) string {
 	return "Mozilla/5.0 (iPad; CPU OS " + strconv.Itoa(v) + "_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/" + strconv.Itoa(v) + ".4 Mobile/15E148 Safari/604.1"
 }
 
+// AndroidChrome 获取 Android Chrome 浏览器 User-Agent
 func AndroidChrome(device string, androidVersion int, chromeVersion int) string {
 	av := 14
 	if androidVersion > 0 {
@@ -606,14 +640,17 @@ func AndroidChrome(device string, androidVersion int, chromeVersion int) string 
 	return "Mozilla/5.0 (Linux; Android " + strconv.Itoa(av) + "; " + d + ") AppleWebKit/537.36 (KHTML, like Gecko) Chrome/" + cv + " Mobile Safari/537.36"
 }
 
+// WindowsChrome 获取 Windows Chrome 浏览器 User-Agent
 func WindowsChrome(version int) string {
 	return Chrome(version)
 }
 
+// WindowsFirefox 获取 Windows Firefox 浏览器 User-Agent
 func WindowsFirefox(version int) string {
 	return Firefox(version, "windows")
 }
 
+// MacChrome 获取 macOS Chrome 浏览器 User-Agent
 func MacChrome(version int) string {
 	v := 125
 	if version > 0 {
@@ -622,10 +659,12 @@ func MacChrome(version int) string {
 	return "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/" + strconv.Itoa(v) + ".0.0.0 Safari/537.36"
 }
 
+// MacFirefox 获取 macOS Firefox 浏览器 User-Agent
 func MacFirefox(version int) string {
 	return Firefox(version, "mac")
 }
 
+// LinuxChrome 获取 Linux Chrome 浏览器 User-Agent
 func LinuxChrome(version int) string {
 	v := 125
 	if version > 0 {
@@ -634,10 +673,12 @@ func LinuxChrome(version int) string {
 	return "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/" + strconv.Itoa(v) + ".0.0.0 Safari/537.36"
 }
 
+// LinuxFirefox 获取 Linux Firefox 浏览器 User-Agent
 func LinuxFirefox(version int) string {
 	return Firefox(version, "linux")
 }
 
+// UAList User-Agent 列表构建器
 type UAList struct {
 	UAs      []string
 	browser  string
@@ -646,30 +687,36 @@ type UAList struct {
 	count    int
 }
 
+// NewUAList 创建新的 User-Agent 列表构建器
 func NewUAList() *UAList {
 	return &UAList{}
 }
 
+// FilterBrowser 按浏览器过滤
 func (l *UAList) FilterBrowser(browser string) *UAList {
 	l.browser = strings.ToLower(browser)
 	return l
 }
 
+// FilterOS 按操作系统过滤
 func (l *UAList) FilterOS(os string) *UAList {
 	l.os = strings.ToLower(os)
 	return l
 }
 
+// FilterDevice 按设备过滤
 func (l *UAList) FilterDevice(device string) *UAList {
 	l.device = strings.ToLower(device)
 	return l
 }
 
+// Limit 限制数量
 func (l *UAList) Limit(n int) *UAList {
 	l.count = n
 	return l
 }
 
+// All 获取所有符合条件的 User-Agent
 func (l *UAList) All() []string {
 	pool := l.buildPool()
 	if l.count > 0 && len(pool) > l.count {
@@ -678,6 +725,7 @@ func (l *UAList) All() []string {
 	return pool
 }
 
+// Random 随机获取一个符合条件的 User-Agent
 func (l *UAList) Random() string {
 	pool := l.buildPool()
 	if len(pool) == 0 {
@@ -686,6 +734,7 @@ func (l *UAList) Random() string {
 	return pool[rand.IntN(len(pool))]
 }
 
+// buildPool 构建 User-Agent 池
 func (l *UAList) buildPool() []string {
 	var pool []string
 
@@ -711,6 +760,7 @@ func (l *UAList) buildPool() []string {
 	return pool
 }
 
+// filterByBrowser 按浏览器过滤
 func (l *UAList) filterByBrowser(pool []string) []string {
 	switch l.browser {
 	case "chrome":
@@ -727,6 +777,7 @@ func (l *UAList) filterByBrowser(pool []string) []string {
 	return pool
 }
 
+// filterByOS 按操作系统过滤
 func (l *UAList) filterByOS(pool []string) []string {
 	switch l.os {
 	case "windows":

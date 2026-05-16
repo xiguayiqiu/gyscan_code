@@ -8,13 +8,13 @@ import (
 type DNSFlag uint16
 
 const (
-	DNS_QR_QUERY  DNSFlag = 0
-	DNS_QR_RESP   DNSFlag = 1 << 15
-	DNS_OPCODE    DNSFlag = 0x7800
-	DNS_AA        DNSFlag = 1 << 10
-	DNS_TC        DNSFlag = 1 << 9
-	DNS_RD        DNSFlag = 1 << 8
-	DNS_RA        DNSFlag = 1 << 7
+	DNS_QR_QUERY DNSFlag = 0
+	DNS_QR_RESP  DNSFlag = 1 << 15
+	DNS_OPCODE   DNSFlag = 0x7800
+	DNS_AA       DNSFlag = 1 << 10
+	DNS_TC       DNSFlag = 1 << 9
+	DNS_RD       DNSFlag = 1 << 8
+	DNS_RA       DNSFlag = 1 << 7
 )
 
 type DNSType uint16
@@ -36,18 +36,18 @@ const (
 type DNSClass uint16
 
 const (
-	DNS_IN   DNSClass = 1
-	DNS_CH   DNSClass = 3
-	DNS_HS   DNSClass = 4
+	DNS_IN DNSClass = 1
+	DNS_CH DNSClass = 3
+	DNS_HS DNSClass = 4
 )
 
 type DNS struct {
-	ID      uint16
-	Flags   uint16
-	QDCount uint16
-	ANCount uint16
-	NSCount uint16
-	ARCount uint16
+	ID        uint16
+	Flags     uint16
+	QDCount   uint16
+	ANCount   uint16
+	NSCount   uint16
+	ARCount   uint16
 	Questions []DNSQuestion
 	Answers   []DNSResource
 }
@@ -167,10 +167,10 @@ func (d *DNS) Deserialize(data []byte) ([]byte, error) {
 			break
 		}
 		rr := DNSResource{
-			Name: name,
-			Type: DNSType(binary.BigEndian.Uint16(data[offset:])),
+			Name:  name,
+			Type:  DNSType(binary.BigEndian.Uint16(data[offset:])),
 			Class: DNSClass(binary.BigEndian.Uint16(data[offset+2:])),
-			TTL:  binary.BigEndian.Uint32(data[offset+4:]),
+			TTL:   binary.BigEndian.Uint32(data[offset+4:]),
 		}
 		rr.RDLength = binary.BigEndian.Uint16(data[offset+8:])
 		offset += 10
@@ -249,7 +249,7 @@ func split(s, sep string) []string {
 	return parts
 }
 
-func DNSGetRCODE(flags uint16) int  { return int(flags & 0xF) }
+func DNSGetRCODE(flags uint16) int { return int(flags & 0xF) }
 func DNSIsQR(flags uint16) bool    { return flags&(1<<15) != 0 }
 func DNSIsTC(flags uint16) bool    { return flags&(1<<9) != 0 }
 func DNSIsRD(flags uint16) bool    { return flags&(1<<8) != 0 }

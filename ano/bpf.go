@@ -12,13 +12,13 @@ import (
 )
 
 const (
-	etherOffset  = 0
-	ipOffset     = 14
-	ipProtoOff   = 23
-	ipSrcOff     = 26
-	ipDstOff     = 30
-	tcpUdpSPort  = 0
-	tcpUdpDPort  = 2
+	etherOffset = 0
+	ipOffset    = 14
+	ipProtoOff  = 23
+	ipSrcOff    = 26
+	ipDstOff    = 30
+	tcpUdpSPort = 0
+	tcpUdpDPort = 2
 )
 
 func CompileBPF(expr string) ([]bpf.RawInstruction, error) {
@@ -304,12 +304,12 @@ const (
 )
 
 type bpfProg struct {
-	op         opType
-	left       *bpfProg
-	right      *bpfProg
-	insns      []bpf.Instruction
-	isLeaf     bool
-	leafInsns  []bpf.Instruction
+	op        opType
+	left      *bpfProg
+	right     *bpfProg
+	insns     []bpf.Instruction
+	isLeaf    bool
+	leafInsns []bpf.Instruction
 }
 
 func (bp *bpfProg) compile() []bpf.Instruction {

@@ -16,6 +16,7 @@ import (
 
 const maxRedirects = 30
 
+// Request HTTP 请求对象
 type Request struct {
 	Method         string
 	URL            string
@@ -34,8 +35,10 @@ type Request struct {
 	Stream         bool
 }
 
+// RequestOption 请求选项函数
 type RequestOption func(*Request)
 
+// NewRequest 创建新的请求对象
 func NewRequest(method, url string, opts ...RequestOption) *Request {
 	req := &Request{
 		Method:         method,
@@ -65,12 +68,14 @@ func NewRequest(method, url string, opts ...RequestOption) *Request {
 	return req
 }
 
+// WithParams 设置 URL 查询参数
 func WithParams(params map[string]string) RequestOption {
 	return func(r *Request) {
 		r.Params = params
 	}
 }
 
+// WithHeaders 设置多个请求头
 func WithHeaders(headers map[string]string) RequestOption {
 	return func(r *Request) {
 		for k, v := range headers {
@@ -79,12 +84,14 @@ func WithHeaders(headers map[string]string) RequestOption {
 	}
 }
 
+// WithHeader 设置单个请求头
 func WithHeader(key, value string) RequestOption {
 	return func(r *Request) {
 		r.Headers.Set(key, value)
 	}
 }
 
+// WithCookies 设置多个 Cookie
 func WithCookies(cookies map[string]string) RequestOption {
 	return func(r *Request) {
 		for k, v := range cookies {
@@ -93,30 +100,35 @@ func WithCookies(cookies map[string]string) RequestOption {
 	}
 }
 
+// WithCookie 设置单个 Cookie
 func WithCookie(key, value string) RequestOption {
 	return func(r *Request) {
 		r.Cookies[key] = value
 	}
 }
 
+// WithData 设置表单数据
 func WithData(data map[string]string) RequestOption {
 	return func(r *Request) {
 		r.Data = data
 	}
 }
 
+// WithRawBody 设置原始请求体
 func WithRawBody(body []byte) RequestOption {
 	return func(r *Request) {
 		r.Data = body
 	}
 }
 
+// WithJSON 设置 JSON 请求体
 func WithJSON(data interface{}) RequestOption {
 	return func(r *Request) {
 		r.JSON = data
 	}
 }
 
+// WithAuth 设置 Basic Auth
 func WithAuth(username, password string) RequestOption {
 	return func(r *Request) {
 		r.Auth = &Auth{
@@ -127,6 +139,7 @@ func WithAuth(username, password string) RequestOption {
 	}
 }
 
+// WithDigestAuth 设置 Digest Auth
 func WithDigestAuth(username, password string) RequestOption {
 	return func(r *Request) {
 		r.Auth = &Auth{
@@ -137,6 +150,7 @@ func WithDigestAuth(username, password string) RequestOption {
 	}
 }
 
+// WithBearerToken 设置 Bearer Token
 func WithBearerToken(token string) RequestOption {
 	return func(r *Request) {
 		r.Auth = &Auth{
@@ -146,6 +160,7 @@ func WithBearerToken(token string) RequestOption {
 	}
 }
 
+// WithTokenAuth 设置自定义 Token 认证
 func WithTokenAuth(scheme, token string) RequestOption {
 	return func(r *Request) {
 		r.Auth = &Auth{
@@ -156,18 +171,21 @@ func WithTokenAuth(scheme, token string) RequestOption {
 	}
 }
 
+// WithTimeout 设置超时时间
 func WithTimeout(timeout time.Duration) RequestOption {
 	return func(r *Request) {
 		r.Timeout = timeout
 	}
 }
 
+// WithRedirects 设置是否跟随重定向
 func WithRedirects(allow bool) RequestOption {
 	return func(r *Request) {
 		r.AllowRedirects = allow
 	}
 }
 
+// WithProxy 设置代理
 func WithProxy(proxyURL string) RequestOption {
 	return func(r *Request) {
 		if r.Proxies == nil {
@@ -178,48 +196,56 @@ func WithProxy(proxyURL string) RequestOption {
 	}
 }
 
+// WithProxies 设置多个代理
 func WithProxies(proxies map[string]string) RequestOption {
 	return func(r *Request) {
 		r.Proxies = proxies
 	}
 }
 
+// WithVerify 设置 SSL 验证
 func WithVerify(verify interface{}) RequestOption {
 	return func(r *Request) {
 		r.Verify = verify
 	}
 }
 
+// WithInsecureSkipVerify 跳过 SSL 验证
 func WithInsecureSkipVerify() RequestOption {
 	return func(r *Request) {
 		r.Verify = false
 	}
 }
 
+// WithStream 设置流式响应
 func WithStream(stream bool) RequestOption {
 	return func(r *Request) {
 		r.Stream = stream
 	}
 }
 
+// WithUserAgent 设置 User-Agent
 func WithUserAgent(ua string) RequestOption {
 	return func(r *Request) {
 		r.Headers.Set("User-Agent", ua)
 	}
 }
 
+// WithReferer 设置 Referer
 func WithReferer(referer string) RequestOption {
 	return func(r *Request) {
 		r.Headers.Set("Referer", referer)
 	}
 }
 
+// WithContentType 设置 Content-Type
 func WithContentType(ct string) RequestOption {
 	return func(r *Request) {
 		r.Headers.Set("Content-Type", ct)
 	}
 }
 
+// WithFile 设置单个上传文件
 func WithFile(fieldName, filePath string) RequestOption {
 	return func(r *Request) {
 		if r.Files == nil {
@@ -229,6 +255,7 @@ func WithFile(fieldName, filePath string) RequestOption {
 	}
 }
 
+// WithFiles 设置多个上传文件
 func WithFiles(fields map[string]string) RequestOption {
 	return func(r *Request) {
 		if r.Files == nil {
@@ -240,11 +267,13 @@ func WithFiles(fields map[string]string) RequestOption {
 	}
 }
 
+// fileEntry 文件上传项
 type fileEntry struct {
 	FieldName string
 	FilePath  string
 }
 
+// buildURL 构建最终请求 URL
 func (r *Request) buildURL() (string, error) {
 	parsedURL, err := url.Parse(r.URL)
 	if err != nil {
@@ -260,6 +289,7 @@ func (r *Request) buildURL() (string, error) {
 	return parsedURL.String(), nil
 }
 
+// buildHTTPBody 构建 HTTP 请求体
 func (r *Request) buildHTTPBody() (io.Reader, string, error) {
 	if r.Files != nil && len(r.Files) > 0 {
 		return r.buildMultipartBody()
@@ -291,6 +321,7 @@ func (r *Request) buildHTTPBody() (io.Reader, string, error) {
 	return nil, "", nil
 }
 
+// buildMultipartBody 构建多部分表单请求体
 func (r *Request) buildMultipartBody() (io.Reader, string, error) {
 	buf := &bytes.Buffer{}
 	writer := multipart.NewWriter(buf)
@@ -329,12 +360,14 @@ func (r *Request) buildMultipartBody() (io.Reader, string, error) {
 	return buf, contentType, nil
 }
 
+// applyCookies 应用 Cookie 到请求
 func (r *Request) applyCookies(httpReq *http.Request) {
 	for k, v := range r.Cookies {
 		httpReq.AddCookie(&http.Cookie{Name: k, Value: v})
 	}
 }
 
+// buildHTTPRequest 构建完整的 http.Request 对象
 func (r *Request) buildHTTPRequest(sessionCookies map[string]string) (*http.Request, error) {
 	finalURL, err := r.buildURL()
 	if err != nil {

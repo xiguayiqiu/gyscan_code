@@ -13,6 +13,7 @@ import (
 	"golang.org/x/net/html/charset"
 )
 
+// Response HTTP 响应对象
 type Response struct {
 	StatusCode int
 	Headers    http.Header
@@ -28,6 +29,7 @@ type Response struct {
 	Raw        *http.Response
 }
 
+// buildResponse 从 http.Response 构建 Response
 func buildResponse(rawResp *http.Response, elapsed time.Duration) (*Response, error) {
 	body, err := io.ReadAll(rawResp.Body)
 	if err != nil {
@@ -72,10 +74,12 @@ func buildResponse(rawResp *http.Response, elapsed time.Duration) (*Response, er
 	}, nil
 }
 
+// String 返回响应文本
 func (r *Response) String() string {
 	return r.Text
 }
 
+// Json 解析 JSON 响应为 map[string]interface{}
 func (r *Response) Json() (map[string]interface{}, error) {
 	var result map[string]interface{}
 	decoder := json.NewDecoder(bytes.NewReader(r.Content))
@@ -86,6 +90,7 @@ func (r *Response) Json() (map[string]interface{}, error) {
 	return result, nil
 }
 
+// JsonArray 解析 JSON 响应为 []interface{}
 func (r *Response) JsonArray() ([]interface{}, error) {
 	var result []interface{}
 	decoder := json.NewDecoder(bytes.NewReader(r.Content))
@@ -96,6 +101,7 @@ func (r *Response) JsonArray() ([]interface{}, error) {
 	return result, nil
 }
 
+// decompressBody 解压 gzip 等压缩内容
 func decompressBody(body []byte, contentEncoding string) ([]byte, error) {
 	encoding := strings.ToLower(strings.TrimSpace(contentEncoding))
 
@@ -114,6 +120,7 @@ func decompressBody(body []byte, contentEncoding string) ([]byte, error) {
 	}
 }
 
+// detectEncoding 检测响应编码
 func detectEncoding(contentType string, body []byte) string {
 	contentType = strings.ToLower(contentType)
 	if contentType != "" {
@@ -145,6 +152,7 @@ func detectEncoding(contentType string, body []byte) string {
 	return "utf-8"
 }
 
+// decodeBody 使用指定编码解码响应体
 func decodeBody(body []byte, enc string) (string, error) {
 	reader, err := charset.NewReaderLabel(enc, bytes.NewReader(body))
 	if err != nil {

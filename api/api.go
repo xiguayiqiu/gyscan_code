@@ -5,10 +5,10 @@ import "fmt"
 type Confidence float64
 
 const (
-	ConfidenceTraffic  Confidence = 1.0
-	ConfidenceJSParse  Confidence = 0.8
-	ConfidenceProbe    Confidence = 0.6
-	ConfidenceUnknown  Confidence = 0.3
+	ConfidenceTraffic Confidence = 1.0
+	ConfidenceJSParse Confidence = 0.8
+	ConfidenceProbe   Confidence = 0.6
+	ConfidenceUnknown Confidence = 0.3
 )
 
 type SourceType string
@@ -67,25 +67,25 @@ const (
 )
 
 type DiscoveryConfig struct {
-	Target       string
-	Mode         DiscoveryMode
-	PcapPaths    []string
-	JSPaths      []string
-	ActiveProbe  bool
-	ProbeLimit   int
-	AllowHTTP    bool
-	RateLimit    int
-	IncludeHost  string
-	TLSKeyLog    string
+	Target      string
+	Mode        DiscoveryMode
+	PcapPaths   []string
+	JSPaths     []string
+	ActiveProbe bool
+	ProbeLimit  int
+	AllowHTTP   bool
+	RateLimit   int
+	IncludeHost string
+	TLSKeyLog   string
 }
 
 func DefaultConfig(target string) *DiscoveryConfig {
 	return &DiscoveryConfig{
-		Target:      target,
-		Mode:        ModePassiveAndJS,
-		ProbeLimit:  1000,
-		RateLimit:   10,
-		AllowHTTP:   false,
+		Target:     target,
+		Mode:       ModePassiveAndJS,
+		ProbeLimit: 1000,
+		RateLimit:  10,
+		AllowHTTP:  false,
 	}
 }
 

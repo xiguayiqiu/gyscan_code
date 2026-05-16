@@ -5,7 +5,7 @@ import "strings"
 type DBType int
 
 const (
-	MySQL      DBType = iota
+	MySQL DBType = iota
 	PostgreSQL
 	MSSQL
 	Oracle

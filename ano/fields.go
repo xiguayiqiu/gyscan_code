@@ -139,14 +139,14 @@ func randomIPv4() [4]byte {
 }
 
 type FuzzOpts struct {
-	RandIP       bool
-	RandMAC      bool
-	RandPort     bool
-	RandSeq      bool
-	RandTTL      bool
-	RandFlags    bool
-	RandWindow   bool
-	RandID       bool
+	RandIP     bool
+	RandMAC    bool
+	RandPort   bool
+	RandSeq    bool
+	RandTTL    bool
+	RandFlags  bool
+	RandWindow bool
+	RandID     bool
 }
 
 func DefaultFuzzOpts() *FuzzOpts {

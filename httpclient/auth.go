@@ -12,28 +12,32 @@ import (
 	"strings"
 )
 
+// AuthType 认证类型
 type AuthType int
 
 const (
-	AuthBasic AuthType = iota
-	AuthDigest
-	AuthBearer
-	AuthToken
+	AuthBasic  AuthType = iota // Basic 认证
+	AuthDigest                 // Digest 认证
+	AuthBearer                 // Bearer Token 认证
+	AuthToken                  // 自定义 Token 认证
 )
 
+// Auth 认证信息
 type Auth struct {
-	Type     AuthType
-	Username string
-	Password string
-	Token    string
-	Scheme   string
+	Type     AuthType // 认证类型
+	Username string   // 用户名
+	Password string   // 密码
+	Token    string   // Token
+	Scheme   string   // 认证方案（如 "Bearer"）
 }
 
+// basicAuth 生成 Basic Auth 字符串
 func basicAuth(username, password string) string {
 	auth := username + ":" + password
 	return base64.StdEncoding.EncodeToString([]byte(auth))
 }
 
+// applyDigestAuth 应用 Digest 认证
 func applyDigestAuth(req *http.Request, resp *http.Response, username, password string) error {
 	authHeader := resp.Header.Get("WWW-Authenticate")
 	if authHeader == "" || !strings.HasPrefix(authHeader, "Digest ") {
@@ -87,6 +91,7 @@ func applyDigestAuth(req *http.Request, resp *http.Response, username, password 
 	return nil
 }
 
+// parseDigestParams 解析 Digest 认证参数
 func parseDigestParams(s string) map[string]string {
 	params := make(map[string]string)
 	currentKey := ""
@@ -137,16 +142,19 @@ func parseDigestParams(s string) map[string]string {
 	return params
 }
 
+// md5Hash 计算 MD5 哈希值
 func md5Hash(s string) string {
 	h := md5.Sum([]byte(s))
 	return hex.EncodeToString(h[:])
 }
 
+// sha256Hash 计算 SHA256 哈希值
 func sha256Hash(s string) string {
 	h := sha256.Sum256([]byte(s))
 	return hex.EncodeToString(h[:])
 }
 
+// generateCnonce 生成随机 cnonce
 func generateCnonce() string {
 	b := make([]byte, 8)
 	io.ReadFull(rand.Reader, b)

@@ -520,5 +520,3 @@ func ProgressColor(current, total int) {
 		fmt.Println()
 	}
 }
-
-

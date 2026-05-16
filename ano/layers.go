@@ -63,7 +63,7 @@ func NewEther() *Ether {
 }
 
 func (e *Ether) Tag() string { return "Ether" }
-func (e *Ether) Len() int { return 14 }
+func (e *Ether) Len() int    { return 14 }
 
 func (e *Ether) Copy() Layer {
 	ne := &Ether{}
@@ -104,9 +104,9 @@ func (e *Ether) Next(data []byte) Layer {
 	}
 }
 
-func (e *Ether) SetDst(s string) *Ether    { e.Dst = MAC(s); return e }
-func (e *Ether) SetSrc(s string) *Ether    { e.Src = MAC(s); return e }
-func (e *Ether) SetType(t uint16) *Ether   { e.Type = t; return e }
+func (e *Ether) SetDst(s string) *Ether     { e.Dst = MAC(s); return e }
+func (e *Ether) SetSrc(s string) *Ether     { e.Src = MAC(s); return e }
+func (e *Ether) SetType(t uint16) *Ether    { e.Type = t; return e }
 func (e *Ether) SetDstMAC(m [6]byte) *Ether { e.Dst = m; return e }
 func (e *Ether) SetSrcMAC(m [6]byte) *Ether { e.Src = m; return e }
 
@@ -138,7 +138,7 @@ func NewIPv4() *IPv4 {
 }
 
 func (ip *IPv4) Tag() string { return "IPv4" }
-func (ip *IPv4) Len() int { return int(ip.IHL) * 4 }
+func (ip *IPv4) Len() int    { return int(ip.IHL) * 4 }
 
 func (ip *IPv4) Copy() Layer {
 	n := &IPv4{
@@ -223,33 +223,33 @@ func (ip *IPv4) Next(data []byte) Layer {
 	}
 }
 
-func (ip *IPv4) SetSrc(s string) *IPv4 { ip.Src = IP(s); return ip }
-func (ip *IPv4) SetDst(s string) *IPv4 { ip.Dst = IP(s); return ip }
-func (ip *IPv4) SetTTL(ttl uint8) *IPv4 { ip.TTL = ttl; return ip }
-func (ip *IPv4) SetID(id uint16) *IPv4 { ip.ID = id; return ip }
+func (ip *IPv4) SetSrc(s string) *IPv4     { ip.Src = IP(s); return ip }
+func (ip *IPv4) SetDst(s string) *IPv4     { ip.Dst = IP(s); return ip }
+func (ip *IPv4) SetTTL(ttl uint8) *IPv4    { ip.TTL = ttl; return ip }
+func (ip *IPv4) SetID(id uint16) *IPv4     { ip.ID = id; return ip }
 func (ip *IPv4) SetProtocol(p uint8) *IPv4 { ip.Protocol = p; return ip }
 
 type IPv6 struct {
-	Version     uint8
+	Version      uint8
 	TrafficClass uint8
-	FlowLabel   uint32
-	Length      uint16
-	NextHeader  uint8
-	HopLimit    uint8
-	Src         [16]byte
-	Dst         [16]byte
+	FlowLabel    uint32
+	Length       uint16
+	NextHeader   uint8
+	HopLimit     uint8
+	Src          [16]byte
+	Dst          [16]byte
 }
 
 func NewIPv6() *IPv6 {
 	return &IPv6{
-		Version:  6,
-		HopLimit: 64,
+		Version:    6,
+		HopLimit:   64,
 		NextHeader: IP_PROTO_TCP,
 	}
 }
 
 func (ip6 *IPv6) Tag() string { return "IPv6" }
-func (ip6 *IPv6) Len() int { return 40 }
+func (ip6 *IPv6) Len() int    { return 40 }
 
 func (ip6 *IPv6) Copy() Layer {
 	n := &IPv6{
@@ -317,14 +317,14 @@ type TCP struct {
 }
 
 const (
-	TCP_FIN  uint8 = 1
-	TCP_SYN  uint8 = 2
-	TCP_RST  uint8 = 4
-	TCP_PSH  uint8 = 8
-	TCP_ACK  uint8 = 16
-	TCP_URG  uint8 = 32
-	TCP_ECE  uint8 = 64
-	TCP_CWR  uint8 = 128
+	TCP_FIN uint8 = 1
+	TCP_SYN uint8 = 2
+	TCP_RST uint8 = 4
+	TCP_PSH uint8 = 8
+	TCP_ACK uint8 = 16
+	TCP_URG uint8 = 32
+	TCP_ECE uint8 = 64
+	TCP_CWR uint8 = 128
 )
 
 func NewTCP() *TCP {
@@ -339,7 +339,7 @@ func NewTCP() *TCP {
 }
 
 func (t *TCP) Tag() string { return "TCP" }
-func (t *TCP) Len() int { return int(t.DataOff) * 4 }
+func (t *TCP) Len() int    { return int(t.DataOff) * 4 }
 
 func (t *TCP) Copy() Layer {
 	n := &TCP{
@@ -421,7 +421,7 @@ func NewUDP() *UDP {
 }
 
 func (u *UDP) Tag() string { return "UDP" }
-func (u *UDP) Len() int { return 8 }
+func (u *UDP) Len() int    { return 8 }
 
 func (u *UDP) Copy() Layer {
 	return &UDP{SrcPort: u.SrcPort, DstPort: u.DstPort, Length: u.Length, Checksum: u.Checksum}
@@ -478,7 +478,7 @@ func NewICMP() *ICMP {
 }
 
 func (ic *ICMP) Tag() string { return "ICMP" }
-func (ic *ICMP) Len() int { return 8 }
+func (ic *ICMP) Len() int    { return 8 }
 
 func (ic *ICMP) Copy() Layer {
 	n := &ICMP{Type: ic.Type, Code: ic.Code, Checksum: ic.Checksum, ID: ic.ID, Seq: ic.Seq}
@@ -522,15 +522,15 @@ func (ic *ICMP) Deserialize(data []byte) ([]byte, error) {
 func (ic *ICMP) Next(data []byte) Layer { return nil }
 
 type ARP struct {
-	HWType       uint16
-	ProtoType    uint16
-	HWLen        uint8
-	ProtoLen     uint8
-	Op           uint16
-	SrcMAC       [6]byte
-	SrcIP        [4]byte
-	DstMAC       [6]byte
-	DstIP        [4]byte
+	HWType    uint16
+	ProtoType uint16
+	HWLen     uint8
+	ProtoLen  uint8
+	Op        uint16
+	SrcMAC    [6]byte
+	SrcIP     [4]byte
+	DstMAC    [6]byte
+	DstIP     [4]byte
 }
 
 const (
@@ -549,7 +549,7 @@ func NewARP(op uint16) *ARP {
 }
 
 func (a *ARP) Tag() string { return "ARP" }
-func (a *ARP) Len() int { return 28 }
+func (a *ARP) Len() int    { return 28 }
 
 func (a *ARP) Copy() Layer {
 	n := &ARP{
@@ -595,12 +595,12 @@ func (a *ARP) Deserialize(data []byte) ([]byte, error) {
 
 func (a *ARP) Next(data []byte) Layer { return nil }
 
-func (a *ARP) Request() *ARP  { a.Op = ARP_REQUEST; return a }
-func (a *ARP) Reply() *ARP    { a.Op = ARP_REPLY; return a }
-func (a *ARP) SrcMACStr(s string) *ARP   { a.SrcMAC = MAC(s); return a }
-func (a *ARP) DstMACStr(s string) *ARP   { a.DstMAC = MAC(s); return a }
-func (a *ARP) SrcIPStr(s string) *ARP    { a.SrcIP = IP(s); return a }
-func (a *ARP) DstIPStr(s string) *ARP    { a.DstIP = IP(s); return a }
+func (a *ARP) Request() *ARP           { a.Op = ARP_REQUEST; return a }
+func (a *ARP) Reply() *ARP             { a.Op = ARP_REPLY; return a }
+func (a *ARP) SrcMACStr(s string) *ARP { a.SrcMAC = MAC(s); return a }
+func (a *ARP) DstMACStr(s string) *ARP { a.DstMAC = MAC(s); return a }
+func (a *ARP) SrcIPStr(s string) *ARP  { a.SrcIP = IP(s); return a }
+func (a *ARP) DstIPStr(s string) *ARP  { a.DstIP = IP(s); return a }
 
 func checksum(data []byte) uint16 {
 	var sum uint32

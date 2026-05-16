@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// Session 会话对象，支持保持状态、Cookie、默认配置
 type Session struct {
 	hc              *http.Client
 	transport       *http.Transport
@@ -19,6 +20,7 @@ type Session struct {
 	DefaultVerify   interface{}
 }
 
+// NewSession 创建新的会话对象
 func NewSession() *Session {
 	jar, _ := cookiejar.New(nil)
 
@@ -45,6 +47,7 @@ func NewSession() *Session {
 	return s
 }
 
+// applyDefaults 应用默认配置到请求
 func (s *Session) applyDefaults(r *Request) {
 	for k, v := range s.DefaultHeaders {
 		if r.Headers.Get(k) == "" {
@@ -65,6 +68,7 @@ func (s *Session) applyDefaults(r *Request) {
 	}
 }
 
+// buildRequest 构建请求对象并应用默认配置
 func (s *Session) buildRequest(method, url string, opts ...RequestOption) *Request {
 	r := NewRequest(method, url, opts...)
 	s.applyDefaults(r)
@@ -76,6 +80,7 @@ func (s *Session) buildRequest(method, url string, opts ...RequestOption) *Reque
 	return r
 }
 
+// configureClient 配置HTTP客户端
 func (s *Session) configureClient(r *Request) {
 	s.transport.TLSClientConfig = &tls.Config{
 		InsecureSkipVerify: !s.shouldVerify(r),
@@ -119,6 +124,7 @@ func (s *Session) configureClient(r *Request) {
 	}
 }
 
+// shouldVerify 判断是否验证SSL证书
 func (s *Session) shouldVerify(r *Request) bool {
 	if r.Verify == nil {
 		return true
@@ -129,6 +135,7 @@ func (s *Session) shouldVerify(r *Request) bool {
 	return true
 }
 
+// Do 执行请求
 func (s *Session) Do(r *Request) (*Response, error) {
 	s.configureClient(r)
 
@@ -163,38 +170,47 @@ func (s *Session) Do(r *Request) (*Response, error) {
 	return buildResponse(httpResp, elapsed)
 }
 
+// Get 发送GET请求
 func (s *Session) Get(url string, opts ...RequestOption) (*Response, error) {
 	return s.Do(s.buildRequest("GET", url, opts...))
 }
 
+// Post 发送POST请求
 func (s *Session) Post(url string, opts ...RequestOption) (*Response, error) {
 	return s.Do(s.buildRequest("POST", url, opts...))
 }
 
+// Put 发送PUT请求
 func (s *Session) Put(url string, opts ...RequestOption) (*Response, error) {
 	return s.Do(s.buildRequest("PUT", url, opts...))
 }
 
+// Delete 发送DELETE请求
 func (s *Session) Delete(url string, opts ...RequestOption) (*Response, error) {
 	return s.Do(s.buildRequest("DELETE", url, opts...))
 }
 
+// Head 发送HEAD请求
 func (s *Session) Head(url string, opts ...RequestOption) (*Response, error) {
 	return s.Do(s.buildRequest("HEAD", url, opts...))
 }
 
+// Options 发送OPTIONS请求
 func (s *Session) Options(url string, opts ...RequestOption) (*Response, error) {
 	return s.Do(s.buildRequest("OPTIONS", url, opts...))
 }
 
+// Patch 发送PATCH请求
 func (s *Session) Patch(url string, opts ...RequestOption) (*Response, error) {
 	return s.Do(s.buildRequest("PATCH", url, opts...))
 }
 
+// Cookies 获取指定URL的Cookie
 func (s *Session) Cookies(u *url.URL) []*http.Cookie {
 	return s.hc.Jar.Cookies(u)
 }
 
+// SetCookies 设置指定URL的Cookie
 func (s *Session) SetCookies(u *url.URL, cookies []*http.Cookie) {
 	s.hc.Jar.SetCookies(u, cookies)
 }
