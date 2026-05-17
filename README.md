@@ -31,17 +31,19 @@ C:\User\用户名\go\pkg\mod\github.com\xiguayiqiu\gyscan_code@哈希校验码\d
 
 ## 模块总览
 
-| 模块                        | 说明                          | 对标              |
-| ------------------------- | --------------------------- | --------------- |
-| [ano](#ano)               | 网络协议操作库（数据包构造/发送/嗅探）        | Scapy           |
-| [api](#api)               | API 资产发现（被动流量/前端解析/主动探测）    | —               |
-| [httpclient](#httpclient) | 模拟真实浏览器的 HTTP 请求库           | Python requests |
-| [passwd](#passwd)         | 密码生成（随机/社工/CUPP 字典）         | —               |
-| [scanner](#scanner)       | 扫描模块（子域名/目录/端口）             | —               |
-| [secjson](#secjson)       | 敏感 JSON 分析（识别/脱敏/合规）        | —               |
-| [sqlexp](#sqlexp)         | SQL 注入利用（Payload 生成/WAF 绕过） | —               |
-| [utils](#utils)           | 通用工具函数（进度条等）                | —               |
-| [webshell](#webshell)     | Webshell 生成与上传              | —               |
+| 模块                              | 说明                              | 对标              |
+| -------------------------------- | ------------------------------- | --------------- |
+| [ano](#ano)                      | 网络协议操作库（数据包构造/发送/嗅探）        | Scapy           |
+| [api](#api)                      | API 资产发现（被动流量/前端解析/主动探测）    | —               |
+| [binary_stream](#binary_stream)   | 二进制流操作库（文件编辑/协议解析/链式操作）    | —               |
+| [format_conversion](#format_conversion) | 文件格式转换库（图片/音频/视频互转）     | —               |
+| [httpclient](#httpclient)        | 模拟真实浏览器的 HTTP 请求库           | Python requests |
+| [passwd](#passwd)                | 密码生成（随机/社工/CUPP 字典）         | —               |
+| [scanner](#scanner)              | 扫描模块（子域名/目录/端口）             | —               |
+| [secjson](#secjson)              | 敏感 JSON 分析（识别/脱敏/合规）        | —               |
+| [sqlexp](#sqlexp)                | SQL 注入利用（Payload 生成/WAF 绕过） | —               |
+| [utils](#utils)                  | 通用工具函数（进度条等）                | —               |
+| [webshell](#webshell)            | Webshell 生成与上传              | —               |
 
 ***
 
@@ -142,6 +144,146 @@ api.SaveReport("example.com", result.Endpoints, "report.json")
 - **攻击面测绘**：9 类风险面检测 + Top N 排序
 - **HTTP 实时探测**：端点验证 + 认证绕过测试
 - **一键发现**：`DiscoverPcap` / `DiscoverJS` / `QuickScan` 等便捷函数
+
+***
+
+## binary_stream
+
+二进制流操作库，通过二进制流将数据生成对应文件，以及对文件进行二进制编辑。实现 `io.Reader` / `io.Writer` / `io.Seeker` / `io.Closer` 标准库接口，无缝对接 `io.Copy`、`encoding/binary` 等所有标准库函数。支持大端/小端字节序、多类型数据读写和链式流操作。
+
+### 引入
+
+```go
+import "github.com/xiguayiqiu/gyscan_code/binary_stream"
+```
+
+### 快速开始
+
+```go
+// 从字节切片创建 Stream
+s := binary_stream.NewFromBytes([]byte{0x01, 0x02, 0x03})
+
+// 从文件读取
+s, _ := binary_stream.ReadFile("data.bin")
+
+// 链式构建并保存到文件
+binary_stream.BuildToFile("data.bin", func(s *binary_stream.Stream) {
+    s.WriteString("HEADER")
+    s.WriteUint32(100)
+    s.WriteBytes([]byte{0xFF, 0xFE})
+})
+
+// 编辑文件
+binary_stream.EditFile("data.bin", func(s *binary_stream.Stream) {
+    s.Patch(0, []byte{0xAA, 0xBB})
+})
+```
+
+### 核心特性
+
+- **四大标准库接口**：`io.Reader` / `io.Writer` / `io.Seeker` / `io.Closer`
+- **多种构造函数**：`New` / `NewBE` / `NewLE` / `NewWithCap` / `NewFromBytes` / `NewFromFile` / `NewFromReader`
+- **丰富数据类型**：基础类型 + Varint/Zigzag 编码 + 布尔值 + 浮点数
+- **编辑操作**：Patch / Insert / Delete / Replace / Truncate
+- **性能优化**：`Grow` 预分配、`UnsafeReadBytes` 零拷贝、`Reset` 对象复用
+- **交互式 Shell**：`Shellcode()` / `ShellcodeWithHistory()` / `ShellcodeScript()`
+
+### 标准库接口
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `io.Reader` | `Read(p []byte) (n int, err error)` | 读取数据到 p |
+| `io.Writer` | `Write(p []byte) (n int, err error)` | 从当前位置覆盖写入 |
+| `io.Seeker` | `Seek(offset int64, whence int) (int64, error)` | 移动读写位置 |
+| `io.Closer` | `Close() error` | 释放底层缓冲 |
+
+```go
+s := binary_stream.NewFromBytes([]byte("Hello World"))
+
+// 配合 io.Copy
+var buf bytes.Buffer
+io.Copy(&buf, s)
+
+// 配合 encoding/binary
+var header struct { Magic uint32; Size uint16 }
+binary.Read(s, binary.BigEndian, &header)
+```
+
+### 对比 unsafe binary
+
+| 操作 | unsafe binary | binary_stream |
+|------|--------------|---------------|
+| 字节序切换 | 手动 `binary.LittleEndian` | `.SetOrder()` 链式设置 |
+| 错误处理 | 手动检查 error | `.Error()` / `.Must()` |
+| 位置管理 | 手动维护 offset | `.SetPos()` / `.Seek()` |
+| 文件操作 | 手动 Read/Write | `.SaveToFile()` / `.LoadFromFile()` |
+| 编辑操作 | 需手动实现 | Patch/Insert/Delete/Replace |
+
+***
+
+## format_conversion
+
+文件格式转换库，基于 `binary_stream` 实现图片、音频、视频文件格式之间的互转。通过魔数检测自动识别源格式，支持文件级和字节级转换。
+
+### 引入
+
+```go
+import "github.com/xiguayiqiu/gyscan_code/format_conversion"
+```
+
+### 快速开始
+
+```go
+// 通用转换
+err := format_conversion.Convert("input.png", "output.jpg")
+
+// 图片转换
+err := format_conversion.ImageConvert("photo.png", "photo.bmp")
+
+// 音频转换
+err := format_conversion.AudioConvert("sound.wav", "sound.mp3")
+
+// 视频转换
+err := format_conversion.VideoConvert("clip.mp4", "clip.mov")
+
+// 批量转换
+err := format_conversion.BatchConvert("./images", ".png", ".webp")
+```
+
+### 支持的格式
+
+| 类型 | 格式 |
+|------|------|
+| 图片 | PNG, JPG/JPEG, BMP, ICO, WEBP, GIF |
+| 音频 | WAV, MP3, OGG |
+| 视频 | MP4, MOV |
+
+### 支持的转换路径
+
+| 类型 | 转换 |
+|------|------|
+| 图片 | PNG ↔ BMP, PNG → JPG, JPG → PNG, PNG/JPG → ICO, PNG/JPG → WEBP |
+| 音频 | WAV ↔ MP3, WAV ↔ OGG, MP3 ↔ OGG |
+| 视频 | MP4 ↔ MOV（容器转换，无损）, 视频 → GIF, 视频 → 音频 |
+
+### 核心特性
+
+- **魔数检测**：自动识别文件真实格式
+- **批量转换**：`BatchConvert` 目录级批量处理
+- **Shell 交互**：`Shellcode()` 交互式转换
+- **脚本支持**：`ShellcodeScript()` 批处理脚本
+
+### Shellcode
+
+```go
+// 交互式 Shell
+format_conversion.Shellcode()
+
+// 脚本执行
+format_conversion.ShellcodeScript("commands.txt")
+```
+
+支持的命令：`convert` / `batch` / `info` / `detect` / `formats`
 
 ***
 

@@ -185,8 +185,10 @@
   },
   "active": "98569fc9de58202f",
   "lastOpenFiles": [
-    "sqlexp.md",
+    "format_conversion.md",
     "README.md",
+    "binary_stream.md",
+    "sqlexp.md",
     "api.md",
     "secjson.md",
     "scanner.md",
