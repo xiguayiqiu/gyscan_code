@@ -1,12 +1,12 @@
-# gyscan\_code
+# gyscan_code
 
 Go 语言编写的网络安全开发库，支持 Windows、macOS 和 Linux 平台，采用模块化设计。
 
-!\[Go Version]\(<https://img.shields.io/badge/Go-1.26%2B-blue> null)
-!\[License]\(<https://img.shields.io/badge/License-Apache%202.0-green> null)
-!\[Platform]\(<https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey> null)
+![Go Version](https://img.shields.io/badge/Go-1.26%2B-blue)
+![License](https://img.shields.io/badge/License-Apache%202.0-green)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
 
-### 这个Go语言库希望有更多的Go开发者，与我共同开发这个开发库！欢迎`issues` \~\~
+### 这个Go语言库希望有更多的Go开发者，与我共同开发这个开发库！欢迎`issues` ~~
 
 ## 安装
 
@@ -16,7 +16,7 @@ go get github.com/xiguayiqiu/gyscan_code
 
 ## 文档位置
 
-### 通过以下位置即可看到每个库的使用方法，后续本作者会补齐`gyscan_code`的goDoc的\~
+### 通过以下位置即可看到每个库的使用方法，后续本作者会补齐`gyscan_code`的goDoc的~
 
 注意：`ShellCode()`函数对Windows是零兼容！所以无法在Windows系统中使用`ShellCode()`函数，原因是这个库主要是给Linux系统和Macos做的！当然其他除`Shellcode()`函数之外全部都可以在Windows系统使用
 
@@ -38,8 +38,8 @@ C:\User\用户名\go\pkg\mod\github.com\xiguayiqiu\gyscan_code@哈希校验码\d
 | ---------------------------------------- | --------------------------- | --------------- |
 | [ano](#ano)                              | 网络协议操作库（数据包构造/发送/嗅探）        | Scapy           |
 | [api](#api)                              | API 资产发现（被动流量/前端解析/主动探测）    | —               |
-| [binary\_stream](#binary_stream)         | 二进制流操作库（文件编辑/协议解析/链式操作）     | —               |
-| [format\_conversion](#format_conversion) | 文件格式转换库（图片/音频/视频/文档互转）      | —               |
+| [binary_stream](#binary_stream)         | 二进制流操作库（文件编辑/协议解析/链式操作）     | —               |
+| [format_conversion](#format_conversion) | 文件格式转换库（图片/音频/视频/文档互转）      | —               |
 | [httpclient](#httpclient)                | 模拟真实浏览器的 HTTP 请求库           | Python requests |
 | [passwd](#passwd)                        | 密码生成（随机/社工/CUPP 字典）         | —               |
 | [scanner](#scanner)                      | 扫描模块（子域名/目录/端口）             | —               |
@@ -150,7 +150,7 @@ api.SaveReport("example.com", result.Endpoints, "report.json")
 
 ***
 
-## binary\_stream
+## binary_stream
 
 二进制流操作库，通过二进制流将数据生成对应文件，以及对文件进行二进制编辑。实现 `io.Reader` / `io.Writer` / `io.Seeker` / `io.Closer` 标准库接口，无缝对接 `io.Copy`、`encoding/binary` 等所有标准库函数。支持大端/小端字节序、多类型数据读写和链式流操作。
 
@@ -214,7 +214,7 @@ binary.Read(s, binary.BigEndian, &header)
 
 ### 对比 unsafe binary
 
-| 操作    | unsafe binary            | binary\_stream                      |
+| 操作    | unsafe binary            | binary_stream                      |
 | ----- | ------------------------ | ----------------------------------- |
 | 字节序切换 | 手动 `binary.LittleEndian` | `.SetOrder()` 链式设置                  |
 | 错误处理  | 手动检查 error               | `.Error()` / `.Must()`              |
@@ -224,7 +224,7 @@ binary.Read(s, binary.BigEndian, &header)
 
 ***
 
-## format\_conversion
+## format_conversion
 
 文件格式转换库，基于 `binary_stream` 和 `ffmpeg-go` / `pandoc` 实现图片、音频、视频、文档文件格式之间的互转。通过魔数检测自动识别源格式，支持文件级和字节级转换。
 
@@ -540,11 +540,11 @@ requests := e.BuildRequests()   // URL 编码后的完整请求
 | 注入方法     | 数据库                          | 覆盖技术                                    |
 | -------- | ---------------------------- | --------------------------------------- |
 | 报错注入     | MySQL/PG/MSSQL/Oracle/SQLite | EXTRACTVALUE/CAST/CONVERT 等             |
-| Union 注入 | MySQL/PG/MSSQL               | 列数探测、information\_schema/pg\_catalog 枚举 |
+| Union 注入 | MySQL/PG/MSSQL               | 列数探测、information_schema/pg_catalog 枚举 |
 | 布尔盲注     | MySQL/MSSQL                  | 真假条件、SUBSTRING/ASCII 提取                 |
-| 延时盲注     | MySQL/PG/MSSQL/Oracle/SQLite | SLEEP/pg\_sleep/WAITFOR/DBMS\_LOCK      |
-| 堆叠查询     | MySQL/MSSQL/PG               | INSERT/DELETE/WRITE/xp\_cmdshell        |
-| OOB 外带   | MySQL/MSSQL/Oracle/PG        | LOAD\_FILE/xp\_dirtree/UTL\_HTTP        |
+| 延时盲注     | MySQL/PG/MSSQL/Oracle/SQLite | SLEEP/pg_sleep/WAITFOR/DBMS_LOCK      |
+| 堆叠查询     | MySQL/MSSQL/PG               | INSERT/DELETE/WRITE/xp_cmdshell        |
+| OOB 外带   | MySQL/MSSQL/Oracle/PG        | LOAD_FILE/xp_dirtree/UTL_HTTP        |
 | WAF 绕过   | 8 种策略                        | 内联注释/大小写/URL编码/Hex/空白/关键字拆分等            |
 
 ***
