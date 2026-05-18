@@ -1,9 +1,12 @@
 package format_conversion
 
 import (
-	"encoding/binary"
 	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
 
+	ffmpeg "github.com/u2takey/ffmpeg-go"
 	"github.com/xiguayiqiu/gyscan_code/binary_stream"
 )
 
@@ -39,71 +42,41 @@ func convertMP4MOV(data []byte, srcFmt, dstFmt FormatType) ([]byte, error) {
 }
 
 func videoToGIF(data []byte, srcFmt FormatType) ([]byte, error) {
-	s := binary_stream.NewWithOrder(binary.LittleEndian)
-
-	s.WriteBytes([]byte("GIF89a"))
-
-	w := uint16(320)
-	h := uint16(240)
-	if len(data) > 20 {
-		w = binary.BigEndian.Uint16(data[16:18])
-		h = binary.BigEndian.Uint16(data[18:20])
-	}
-	if w == 0 {
-		w = 320
-	}
-	if h == 0 {
-		h = 240
+	if _, err := exec.LookPath("ffmpeg"); err != nil {
+		return nil, fmt.Errorf("format_conversion: ffmpeg not found.\nInstall: sudo apt install ffmpeg  (Linux)\n        brew install ffmpeg      (macOS)\n        winget install ffmpeg    (Windows)")
 	}
 
-	s.WriteUint16(w)
-	s.WriteUint16(h)
-
-	s.WriteByte(0xF7)
-	s.WriteByte(0)
-	s.WriteByte(0)
-
-	s.WriteByte(0xFF)
-	s.WriteByte(0xFF)
-	s.WriteByte(0xFF)
-	s.WriteByte(0)
-	s.WriteByte(0)
-	s.WriteByte(0)
-
-	s.WriteByte(0x21)
-	s.WriteByte(0xF9)
-	s.WriteByte(4)
-	s.WriteByte(0x04)
-	s.WriteUint16(50)
-	s.WriteByte(0)
-	s.WriteByte(0)
-
-	s.WriteByte(0x2C)
-	s.WriteUint16(0)
-	s.WriteUint16(0)
-	s.WriteUint16(w)
-	s.WriteUint16(h)
-	s.WriteByte(0)
-
-	minDataSize := 100
-	dataToWrite := data[44:]
-	if len(dataToWrite) < minDataSize {
-		dataToWrite = data
+	tmpDir, err := os.MkdirTemp("", "formatconv_*")
+	if err != nil {
+		return nil, fmt.Errorf("format_conversion: create temp dir: %w", err)
 	}
-	if len(dataToWrite) > 4096 {
-		dataToWrite = dataToWrite[:4096]
+	defer os.RemoveAll(tmpDir)
+
+	ext := formatExtensions[srcFmt][0]
+	srcPath := filepath.Join(tmpDir, "input"+ext)
+	if err := os.WriteFile(srcPath, data, 0644); err != nil {
+		return nil, fmt.Errorf("format_conversion: write temp file: %w", err)
 	}
 
-	s.WriteByte(byte(len(dataToWrite) - 1))
-	s.WriteBytes(dataToWrite[:min(len(dataToWrite), 255)])
-	if len(dataToWrite) > 255 {
-		remaining := dataToWrite[255:]
-		s.WriteBytes(remaining[:min(len(remaining), 255)])
+	dstPath := filepath.Join(tmpDir, "output.gif")
+
+	err = ffmpeg.Input(srcPath).
+		Output(dstPath, ffmpeg.KwArgs{
+			"vf":     "fps=10,scale=320:-1:flags=lanczos",
+			"loop":   "0",
+		}).
+		OverWriteOutput().
+		Run()
+	if err != nil {
+		return nil, fmt.Errorf("format_conversion: ffmpeg conversion failed: %w", err)
 	}
 
-	s.WriteByte(0x3B)
+	result, err := os.ReadFile(dstPath)
+	if err != nil {
+		return nil, fmt.Errorf("format_conversion: read output gif: %w", err)
+	}
 
-	return s.Bytes(), nil
+	return result, nil
 }
 
 func findBox(data []byte, boxType string) int {
@@ -118,44 +91,27 @@ func findBox(data []byte, boxType string) int {
 
 // ExtractAudioFromVideo 从视频中提取音频轨道
 func ExtractAudioFromVideo(videoPath string, audioPath string) error {
-	data, err := readFileBytes(videoPath)
-	if err != nil {
-		return fmt.Errorf("format_conversion: read video: %w", err)
+	if _, err := exec.LookPath("ffmpeg"); err != nil {
+		return fmt.Errorf("format_conversion: ffmpeg not found.\nInstall: sudo apt install ffmpeg  (Linux)\n        brew install ffmpeg      (macOS)\n        winget install ffmpeg    (Windows)")
 	}
 
-	audioData := findAudioTrack(data)
-	if audioData == nil {
-		return fmt.Errorf("format_conversion: no audio track found")
-	}
-
-	dstFmt := DetectFormatByExt(extractExt(audioPath))
-	result, err := convertBytesHelper(audioData, dstFmt)
-	if err != nil {
-		return err
-	}
-
-	return writeFileBytes(audioPath, result)
+	return ffmpeg.Input(videoPath).
+		Output(audioPath, ffmpeg.KwArgs{"vn": ""}).
+		OverWriteOutput().
+		Run()
 }
 
 // VideoToGIF 视频转 GIF
 func VideoToGIF(videoPath string, gifPath string) error {
-	data, err := readFileBytes(videoPath)
-	if err != nil {
-		return fmt.Errorf("format_conversion: read video: %w", err)
+	if _, err := exec.LookPath("ffmpeg"); err != nil {
+		return fmt.Errorf("format_conversion: ffmpeg not found.\nInstall: sudo apt install ffmpeg  (Linux)\n        brew install ffmpeg      (macOS)\n        winget install ffmpeg    (Windows)")
 	}
 
-	srcFmt := DetectFormat(data)
-	result, err := videoToGIF(data, srcFmt)
-	if err != nil {
-		return err
-	}
-
-	return writeFileBytes(gifPath, result)
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
+	return ffmpeg.Input(videoPath).
+		Output(gifPath, ffmpeg.KwArgs{
+			"vf":   "fps=10,scale=320:-1:flags=lanczos",
+			"loop": "0",
+		}).
+		OverWriteOutput().
+		Run()
 }

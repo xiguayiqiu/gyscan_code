@@ -396,7 +396,12 @@ func (t *TCP) Deserialize(data []byte) ([]byte, error) {
 	return data[doffBytes:], nil
 }
 
-func (t *TCP) Next(data []byte) Layer { return nil }
+func (t *TCP) Next(data []byte) Layer {
+	if len(data) > 0 && IsTLS(data) {
+		return &TLSRecord{}
+	}
+	return nil
+}
 
 func (t *TCP) SetSPort(p uint16) *TCP  { t.SrcPort = p; return t }
 func (t *TCP) SetDPort(p uint16) *TCP  { t.DstPort = p; return t }

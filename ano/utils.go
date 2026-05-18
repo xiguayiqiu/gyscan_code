@@ -116,7 +116,7 @@ func HexDiff(a, b []byte) string {
 		maxLen = len(b)
 	}
 
-	result.WriteString(fmt.Sprintf("Hex diff (%d vs %d bytes):\n", len(a), len(b)))
+	result.WriteString(fmt.Sprintf("十六进制差异 (%d vs %d 字节):\n", len(a), len(b)))
 	for i := 0; i < maxLen; i += 16 {
 		result.WriteString(fmt.Sprintf("%04x ", i))
 		for j := 0; j < 16; j++ {

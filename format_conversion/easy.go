@@ -20,6 +20,16 @@ func VideoConvert(srcPath, dstPath string) error {
 	return ConvertFile(srcPath, dstPath)
 }
 
+// DocumentConvert 文档格式转换便捷函数
+func DocumentConvert(srcPath, dstPath string) error {
+	return ConvertFile(srcPath, dstPath)
+}
+
+// IsPandocAvailable 检查 pandoc 是否已安装
+func IsPandocAvailable() bool {
+	return isPandocAvailable()
+}
+
 // Convert 通用格式转换
 func Convert(srcPath, dstPath string) error {
 	return ConvertFile(srcPath, dstPath)
@@ -70,9 +80,10 @@ func GetFormatName(path string) string {
 // SupportedFormats 返回所有支持的格式列表
 func SupportedFormats() []string {
 	return []string{
-		"PNG", "JPG/JPEG", "BMP", "ICO", "WEBP",
+		"PNG", "JPG/JPEG", "BMP", "ICO", "WEBP", "GIF",
 		"WAV", "MP3", "OGG",
-		"MP4", "MOV", "GIF",
+		"MP4", "MOV",
+		"Markdown", "DOC", "DOCX", "ODT", "HTML", "RTF", "PDF", "TXT",
 	}
 }
 
@@ -90,5 +101,11 @@ func SupportedConversions() []string {
 		"MP4 ↔ MOV",
 		"MP4/MOV → GIF",
 		"Video → Audio",
+"Markdown ↔ DOCX/ODT/HTML/RTF/TXT",
+		"Markdown → PDF (需要 wkhtmltopdf/weasyprint 等 PDF 引擎)",
+		"DOC → DOCX/ODT/HTML/RTF/TXT",
+		"DOCX ↔ ODT/HTML/RTF/TXT",
+		"HTML ↔ TXT/RTF",
+		"PDF → TXT",
 	}
 }

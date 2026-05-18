@@ -2,9 +2,9 @@
 
 Go 语言编写的网络安全开发库，支持 Windows、macOS 和 Linux 平台，采用模块化设计。
 
-![Go Version](https://img.shields.io/badge/Go-1.26%2B-blue)
-![License](https://img.shields.io/badge/License-Apache%202.0-green)
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
+!\[Go Version]\(<https://img.shields.io/badge/Go-1.26%2B-blue> null)
+!\[License]\(<https://img.shields.io/badge/License-Apache%202.0-green> null)
+!\[Platform]\(<https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey> null)
 
 ### 这个Go语言库希望有更多的Go开发者，与我共同开发这个开发库！欢迎`issues` \~\~
 
@@ -18,6 +18,8 @@ go get github.com/xiguayiqiu/gyscan_code
 
 ### 通过以下位置即可看到每个库的使用方法，后续本作者会补齐`gyscan_code`的goDoc的\~
 
+注意：`ShellCode()`函数对Windows是零兼容！所以无法在Windows系统中使用`ShellCode()`函数，原因是这个库主要是给Linux系统和Macos做的！当然其他除`Shellcode()`函数之外全部都可以在Windows系统使用
+
 - Windows
 
 ```bash
@@ -25,25 +27,26 @@ C:\User\用户名\go\pkg\mod\github.com\xiguayiqiu\gyscan_code@哈希校验码\d
 ```
 
 - Linux
+
 ```bash
 ~/go/pkg/mod/github.com/xiguayiqiu/gyscan_code@哈希校验码/docs/
 ```
 
 ## 模块总览
 
-| 模块                              | 说明                              | 对标              |
-| -------------------------------- | ------------------------------- | --------------- |
-| [ano](#ano)                      | 网络协议操作库（数据包构造/发送/嗅探）        | Scapy           |
-| [api](#api)                      | API 资产发现（被动流量/前端解析/主动探测）    | —               |
-| [binary_stream](#binary_stream)   | 二进制流操作库（文件编辑/协议解析/链式操作）    | —               |
-| [format_conversion](#format_conversion) | 文件格式转换库（图片/音频/视频互转）     | —               |
-| [httpclient](#httpclient)        | 模拟真实浏览器的 HTTP 请求库           | Python requests |
-| [passwd](#passwd)                | 密码生成（随机/社工/CUPP 字典）         | —               |
-| [scanner](#scanner)              | 扫描模块（子域名/目录/端口）             | —               |
-| [secjson](#secjson)              | 敏感 JSON 分析（识别/脱敏/合规）        | —               |
-| [sqlexp](#sqlexp)                | SQL 注入利用（Payload 生成/WAF 绕过） | —               |
-| [utils](#utils)                  | 通用工具函数（进度条等）                | —               |
-| [webshell](#webshell)            | Webshell 生成与上传              | —               |
+| 模块                                       | 说明                          | 对标              |
+| ---------------------------------------- | --------------------------- | --------------- |
+| [ano](#ano)                              | 网络协议操作库（数据包构造/发送/嗅探）        | Scapy           |
+| [api](#api)                              | API 资产发现（被动流量/前端解析/主动探测）    | —               |
+| [binary\_stream](#binary_stream)         | 二进制流操作库（文件编辑/协议解析/链式操作）     | —               |
+| [format\_conversion](#format_conversion) | 文件格式转换库（图片/音频/视频/文档互转）      | —               |
+| [httpclient](#httpclient)                | 模拟真实浏览器的 HTTP 请求库           | Python requests |
+| [passwd](#passwd)                        | 密码生成（随机/社工/CUPP 字典）         | —               |
+| [scanner](#scanner)                      | 扫描模块（子域名/目录/端口）             | —               |
+| [secjson](#secjson)                      | 敏感 JSON 分析（识别/脱敏/合规）        | —               |
+| [sqlexp](#sqlexp)                        | SQL 注入利用（Payload 生成/WAF 绕过） | —               |
+| [utils](#utils)                          | 通用工具函数（进度条等）                | —               |
+| [webshell](#webshell)                    | Webshell 生成与上传              | —               |
 
 ***
 
@@ -147,7 +150,7 @@ api.SaveReport("example.com", result.Endpoints, "report.json")
 
 ***
 
-## binary_stream
+## binary\_stream
 
 二进制流操作库，通过二进制流将数据生成对应文件，以及对文件进行二进制编辑。实现 `io.Reader` / `io.Writer` / `io.Seeker` / `io.Closer` 标准库接口，无缝对接 `io.Copy`、`encoding/binary` 等所有标准库函数。支持大端/小端字节序、多类型数据读写和链式流操作。
 
@@ -190,12 +193,12 @@ binary_stream.EditFile("data.bin", func(s *binary_stream.Stream) {
 
 ### 标准库接口
 
-| 接口 | 方法 | 说明 |
-|------|------|------|
-| `io.Reader` | `Read(p []byte) (n int, err error)` | 读取数据到 p |
-| `io.Writer` | `Write(p []byte) (n int, err error)` | 从当前位置覆盖写入 |
-| `io.Seeker` | `Seek(offset int64, whence int) (int64, error)` | 移动读写位置 |
-| `io.Closer` | `Close() error` | 释放底层缓冲 |
+| 接口          | 方法                                              | 说明        |
+| ----------- | ----------------------------------------------- | --------- |
+| `io.Reader` | `Read(p []byte) (n int, err error)`             | 读取数据到 p   |
+| `io.Writer` | `Write(p []byte) (n int, err error)`            | 从当前位置覆盖写入 |
+| `io.Seeker` | `Seek(offset int64, whence int) (int64, error)` | 移动读写位置    |
+| `io.Closer` | `Close() error`                                 | 释放底层缓冲    |
 
 ```go
 s := binary_stream.NewFromBytes([]byte("Hello World"))
@@ -211,19 +214,19 @@ binary.Read(s, binary.BigEndian, &header)
 
 ### 对比 unsafe binary
 
-| 操作 | unsafe binary | binary_stream |
-|------|--------------|---------------|
-| 字节序切换 | 手动 `binary.LittleEndian` | `.SetOrder()` 链式设置 |
-| 错误处理 | 手动检查 error | `.Error()` / `.Must()` |
-| 位置管理 | 手动维护 offset | `.SetPos()` / `.Seek()` |
-| 文件操作 | 手动 Read/Write | `.SaveToFile()` / `.LoadFromFile()` |
-| 编辑操作 | 需手动实现 | Patch/Insert/Delete/Replace |
+| 操作    | unsafe binary            | binary\_stream                      |
+| ----- | ------------------------ | ----------------------------------- |
+| 字节序切换 | 手动 `binary.LittleEndian` | `.SetOrder()` 链式设置                  |
+| 错误处理  | 手动检查 error               | `.Error()` / `.Must()`              |
+| 位置管理  | 手动维护 offset              | `.SetPos()` / `.Seek()`             |
+| 文件操作  | 手动 Read/Write            | `.SaveToFile()` / `.LoadFromFile()` |
+| 编辑操作  | 需手动实现                    | Patch/Insert/Delete/Replace         |
 
 ***
 
-## format_conversion
+## format\_conversion
 
-文件格式转换库，基于 `binary_stream` 实现图片、音频、视频文件格式之间的互转。通过魔数检测自动识别源格式，支持文件级和字节级转换。
+文件格式转换库，基于 `binary_stream` 和 `ffmpeg-go` / `pandoc` 实现图片、音频、视频、文档文件格式之间的互转。通过魔数检测自动识别源格式，支持文件级和字节级转换。
 
 ### 引入
 
@@ -237,53 +240,103 @@ import "github.com/xiguayiqiu/gyscan_code/format_conversion"
 // 通用转换
 err := format_conversion.Convert("input.png", "output.jpg")
 
-// 图片转换
+// 图片转换（Go 原生实现，无需外部依赖）
 err := format_conversion.ImageConvert("photo.png", "photo.bmp")
 
-// 音频转换
+// 音频转换（需要 ffmpeg）
 err := format_conversion.AudioConvert("sound.wav", "sound.mp3")
 
-// 视频转换
+// 视频转换（MP4↔MOV 无损，GIF 需要 ffmpeg）
 err := format_conversion.VideoConvert("clip.mp4", "clip.mov")
+
+// 文档转换（需要 pandoc）
+err := format_conversion.DocumentConvert("readme.md", "readme.docx")
 
 // 批量转换
 err := format_conversion.BatchConvert("./images", ".png", ".webp")
+
+// 检查 pandoc 是否可用
+if !format_conversion.IsPandocAvailable() {
+    fmt.Println("请先安装 pandoc")
+}
 ```
+
+### 依赖要求
+
+| 工具 | 用途 | Linux | macOS | Windows |
+|------|------|-------|-------|---------|
+| **ffmpeg** | 音频/视频/GIF 转换 | `sudo apt install ffmpeg` | `brew install ffmpeg` | `winget install ffmpeg` |
+| **pandoc** | 文档格式转换 | `sudo apt install pandoc` | `brew install pandoc` | `winget install pandoc` |
+
+> 图片转换（PNG/JPG/BMP/ICO/WEBP）使用 Go 原生实现，无需额外依赖。Windows 用户运行 ShellCode 时会自动检测缺失组件并提示安装方式。
 
 ### 支持的格式
 
 | 类型 | 格式 |
-|------|------|
+| -- | --- |
 | 图片 | PNG, JPG/JPEG, BMP, ICO, WEBP, GIF |
 | 音频 | WAV, MP3, OGG |
 | 视频 | MP4, MOV |
+| 文档 | Markdown, DOC, DOCX, ODT, HTML, RTF, PDF, TXT |
 
 ### 支持的转换路径
 
 | 类型 | 转换 |
-|------|------|
+| -- | --- |
 | 图片 | PNG ↔ BMP, PNG → JPG, JPG → PNG, PNG/JPG → ICO, PNG/JPG → WEBP |
 | 音频 | WAV ↔ MP3, WAV ↔ OGG, MP3 ↔ OGG |
 | 视频 | MP4 ↔ MOV（容器转换，无损）, 视频 → GIF, 视频 → 音频 |
+| 文档 | Markdown ↔ DOCX/ODT/HTML/RTF/TXT, DOC → DOCX/ODT/HTML/RTF/TXT, PDF → TXT |
+
+> **注意**：pandoc 不支持输出 `.doc` 格式，请使用 `.docx` 代替。PDF 输出需要 `wkhtmltopdf` 等 PDF 引擎。
 
 ### 核心特性
 
 - **魔数检测**：自动识别文件真实格式
+- **图片转换**：纯 Go 实现，零外部依赖
+- **音频/视频转换**：基于 ffmpeg-go 的真正编解码
+- **文档转换**：基于 pandoc 的多格式互转（Markdown/DOCX/ODT/HTML/RTF/PDF/TXT）
 - **批量转换**：`BatchConvert` 目录级批量处理
-- **Shell 交互**：`Shellcode()` 交互式转换
+- **Shell 交互**：`Shellcode()` 交互式 bash shell，支持系统命令
 - **脚本支持**：`ShellcodeScript()` 批处理脚本
+- **依赖检查**：启动时自动检测 pandoc/ffmpeg/ImageMagick，Windows 用户收到安装提示
 
 ### Shellcode
 
 ```go
-// 交互式 Shell
+// 交互式 Shell（自动依赖检查）
 format_conversion.Shellcode()
 
 // 脚本执行
 format_conversion.ShellcodeScript("commands.txt")
+
+// 带历史记录
+format_conversion.ShellcodeWithHistory()
 ```
 
-支持的命令：`convert` / `batch` / `info` / `detect` / `formats`
+启动时自动依赖检查示例：
+
+```
+依赖检查:
+  pandoc: 已安装
+  ffmpeg: 已安装
+  ImageMagick: 已安装
+```
+
+Windows 上缺失组件时：
+
+```
++----------------------------------------------------------+
+|  Windows 用户注意:                                       |
+|  部分功能需要额外安装以下组件才能完整体验:               |
+|    pandoc: https://pandoc.org/installing.html            |
+|             winget install pandoc                        |
+|    ffmpeg: https://ffmpeg.org/download.html              |
+|             winget install ffmpeg                        |
++----------------------------------------------------------+
+```
+
+支持的命令：`convert` / `batch` / `info` / `detect` / `formats` / `pandoc`，同时可直接使用系统命令（ls、cat、echo 等）。
 
 ***
 

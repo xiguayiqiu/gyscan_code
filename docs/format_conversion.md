@@ -1,6 +1,18 @@
 # format_conversion - 文件格式转换库
 
-基于 `binary_stream` 二进制流操作库，实现图片、音频、视频文件格式之间的互转。通过魔数检测自动识别源格式，支持文件级和字节级转换。
+基于 `binary_stream` 二进制流操作库和 `ffmpeg-go` / `pandoc` 等外部工具，实现图片、音频、视频、文档文件格式之间的互转。通过魔数检测自动识别源格式，支持文件级和字节级转换。
+
+## 依赖要求
+
+部分功能依赖外部命令行工具，请在对应平台安装：
+
+| 工具 | 用途 | Linux | macOS | Windows |
+|------|------|-------|-------|---------|
+| **ffmpeg** | 音频/视频/GIF 转换 | `sudo apt install ffmpeg` | `brew install ffmpeg` | `winget install ffmpeg` |
+| **pandoc** | 文档格式转换 | `sudo apt install pandoc` | `brew install pandoc` | `winget install pandoc` |
+| **wkhtmltopdf** (可选) | PDF 输出引擎 | `sudo apt install wkhtmltopdf` | `brew install wkhtmltopdf` | `winget install wkhtmltopdf` |
+
+> **Windows 用户注意**：运行 ShellCode 时会自动检测缺失组件并提示安装方式。图片转换（PNG/JPG/BMP/ICO/WEBP）使用 Go 原生实现，无需额外依赖。
 
 ## 引入
 
@@ -19,11 +31,14 @@ err := format_conversion.Convert("input.png", "output.jpg")
 // 图片转换
 err := format_conversion.ImageConvert("photo.png", "photo.bmp")
 
-// 音频转换
+// 音频转换（需要 ffmpeg）
 err := format_conversion.AudioConvert("sound.wav", "sound.mp3")
 
 // 视频转换
 err := format_conversion.VideoConvert("clip.mp4", "clip.mov")
+
+// 文档转换（需要 pandoc）
+err := format_conversion.DocumentConvert("readme.md", "readme.docx")
 
 // 批量转换
 err := format_conversion.BatchConvert("./images", ".png", ".webp")
@@ -31,6 +46,11 @@ err := format_conversion.BatchConvert("./images", ".png", ".webp")
 // 格式检测
 format := format_conversion.GetFormat("file.bin")
 name := format_conversion.GetFormatName("file.bin")
+
+// 检查依赖
+if !format_conversion.IsPandocAvailable() {
+    fmt.Println("请先安装 pandoc")
+}
 ```
 
 ---
@@ -55,6 +75,8 @@ name := format_conversion.GetFormatName("file.bin")
 | MOV | `... moov/mdat/ftyp` | QuickTime 容器 |
 | GIF | `GIF8` | GIF 标识 |
 
+文档格式（Markdown/DOC/DOCX/ODT/HTML/RTF/PDF/TXT）通过扩展名检测，魔数检测不可靠。
+
 ### 函数
 
 | 函数 | 说明 | 返回值 |
@@ -77,6 +99,8 @@ pathFormat := format_conversion.GetFormat("file.jpg")  // 读取文件头检测
 ---
 
 ## 图片格式转换
+
+图片转换使用 Go 标准库 `image/png`、`image/jpeg` 和 `binary_stream` 自定义编码器实现，无需外部依赖。
 
 ### 支持的转换路径
 
@@ -141,35 +165,19 @@ BMP 文件头共 54 字节：
 
 ## 音频格式转换
 
+音频转换使用 [ffmpeg-go](https://github.com/u2takey/ffmpeg-go) 调用系统 ffmpeg 进行真正的音频编解码，生成标准的 MP3/OGG/WAV 文件。
+
+> **需要安装 ffmpeg**：`sudo apt install ffmpeg` (Linux) / `brew install ffmpeg` (macOS) / `winget install ffmpeg` (Windows)
+
 ### 支持的转换路径
 
 | 转换路径 | 转换类型 | 核心变化 | 关键处理 |
 |----------|----------|----------|----------|
-| **WAV → MP3** | 压缩转换 | 体积约 1/10，丢失人耳不敏感细节 | 写入 MP3 帧头 0xFFFB，构建 ID3 标签 |
-| **WAV → OGG** | 压缩转换 | OGG 页格式封装 | 构建 OGG Page Header，计算 CRC32 校验 |
-| **MP3 → WAV** | 解压转换 | 体积变大，音质不变 | 构建 RIFF/WAVE 文件头，写入 fmt + data 块 |
-| **OGG → WAV** | 解压转换 | 同 MP3→WAV | 解析 OGG 页头获取采样率、声道信息 |
-| **MP3 ↔ OGG** | 有损互转 | 代际损失（音质二次下降） | 先解压为 WAV 中间格式，再编码为目标格式 |
-
-### WAV 文件结构说明
-
-```
-偏移  大小  字段
-0x00   4    "RIFF"
-0x04   4    文件大小-8
-0x08   4    "WAVE"
-0x0C   4    "fmt "
-0x10   4    fmt 块大小（=16）
-0x14   2    音频格式（=1 PCM）
-0x16   2    声道数
-0x18   4    采样率
-0x1C   4    字节率
-0x20   2    块对齐
-0x22   2    位深度
-0x24   4    "data"
-0x28   4    数据大小
-0x2C   N    PCM 数据
-```
+| **WAV → MP3** | 压缩转换 | 体积约 1/10，丢失人耳不敏感细节 | ffmpeg 编码，自动添加 ID3v2 标签 |
+| **WAV → OGG** | 压缩转换 | OGG Vorbis 编码 | ffmpeg 编码，生成标准 OGG 页格式 |
+| **MP3 → WAV** | 解压转换 | 体积变大，音质不变 | ffmpeg 解码输出 PCM WAV |
+| **OGG → WAV** | 解压转换 | 同 MP3→WAV | ffmpeg 解码 OGG Vorbis 输出 PCM |
+| **MP3 ↔ OGG** | 有损互转 | 代际损失（音质二次下降） | 通过 ffmpeg 先解码再重新编码 |
 
 ```go
 // WAV → MP3
@@ -188,37 +196,27 @@ err := format_conversion.AudioConvert("music.mp3", "music.ogg")
 err := format_conversion.BatchConvert("./audio", ".wav", ".mp3")
 ```
 
-### MP3 ID3 标签结构
-
-MP3 文件可能包含 ID3v2 标签（文件头部）或 ID3v1 标签（文件尾部 128 字节）：
-
-```go
-// ID3v2 头部
-// 偏移 0: "ID3" (3 bytes)
-// 偏移 3: 版本 (2 bytes)
-// 偏移 5: 标志 (1 byte)
-// 偏移 6: 大小 (4 bytes, sync-safe integer)
-```
-
 ---
 
 ## 视频格式转换
+
+视频容器转换（MP4↔MOV）使用 `binary_stream` 直接修改 Box 头实现无损秒转。视频转 GIF 使用 ffmpeg-go 进行抽帧编码，提取音频同样使用 ffmpeg。
 
 ### 支持的转换路径
 
 | 转换路径 | 转换类型 | 核心变化 | 关键处理 |
 |----------|----------|----------|----------|
 | **MP4 ↔ MOV** | 容器转换 | 内部编码相同可无损秒转（仅改封装） | 两者基于 ISO BMFF，修改 ftyp Box 的 FourCC |
-| **视频 → GIF** | 抽帧转换 | 提取关键帧转为动态图片 | 封装 GIF 图形控制扩展块，设置调色板 |
-| **视频 → 音频** | 提取流 | 剥离音频轨道保存为 WAV/MP3/OGG | 解析 moov 原子，定位音频 mdat 数据 |
+| **视频 → GIF** | 抽帧转换 | 需要 ffmpeg，提取关键帧转为动态图片 | ffmpeg 抽帧: fps=10, 缩放至 320px |
+| **视频 → 音频** | 提取流 | 需要 ffmpeg，剥离音频轨道保存为 WAV/MP3/OGG | ffmpeg `-vn` 参数提取纯音频 |
 
 ### 函数
 
 | 函数 | 说明 | 返回值 |
 |------|------|--------|
 | `VideoConvert(srcPath, dstPath)` | 视频格式转换 | `error` |
-| `ExtractAudioFromVideo(videoPath, audioPath)` | 从视频提取音频 | `error` |
-| `VideoToGIF(videoPath, gifPath)` | 视频转 GIF | `error` |
+| `ExtractAudioFromVideo(videoPath, audioPath)` | 从视频提取音频（需要 ffmpeg） | `error` |
+| `VideoToGIF(videoPath, gifPath)` | 视频转 GIF（需要 ffmpeg） | `error` |
 
 ```go
 // MP4 → MOV（无损容器转换）
@@ -227,10 +225,10 @@ err := format_conversion.VideoConvert("clip.mp4", "clip.mov")
 // MOV → MP4
 err := format_conversion.VideoConvert("quicktime.mov", "standard.mp4")
 
-// 从视频提取音频轨道
+// 从视频提取音频轨道（需要 ffmpeg）
 err := format_conversion.ExtractAudioFromVideo("movie.mp4", "soundtrack.mp3")
 
-// 视频转 GIF
+// 视频转 GIF（需要 ffmpeg）
 err := format_conversion.VideoToGIF("short.mp4", "animated.gif")
 ```
 
@@ -252,23 +250,85 @@ Box 结构:
 
 ---
 
+## 文档格式转换
+
+文档转换使用 [pandoc](https://pandoc.org/) 进行格式互转，支持 Markdown、DOCX、ODT、HTML、RTF、PDF、TXT 等格式。
+
+> **需要安装 pandoc**：`sudo apt install pandoc` (Linux) / `brew install pandoc` (macOS) / `winget install pandoc` (Windows)
+
+### 支持的转换路径
+
+| 转换路径 | 转换类型 | 核心变化 |
+|----------|----------|----------|
+| **Markdown ↔ DOCX/ODT/HTML/RTF/TXT** | 文档互转 | pandoc 通用文档转换 |
+| **Markdown → PDF** | 导出 PDF | 需要 PDF 引擎 (wkhtmltopdf/weasyprint/pdflatex) |
+| **DOC → DOCX/ODT/HTML/RTF/TXT** | 旧格式迁移 | .doc 只能作为输入，不能作为输出目标 |
+| **DOCX ↔ ODT/HTML/RTF/TXT** | 文档互转 | 现代 Office 格式互转 |
+| **HTML ↔ TXT/RTF** | 文本/富文本互转 | Web 文档与纯文本/富文本转换 |
+| **PDF → TXT** | 文本提取 | 从 PDF 提取纯文本内容 |
+
+### 注意事项
+
+- **不支持输出 `.doc`**：pandoc 不支持将 `.doc` 作为输出格式，请使用 `.docx` 代替
+- **PDF 输出需要额外引擎**：pandoc 输出 PDF 需要 `wkhtmltopdf`、`weasyprint` 或 `pdflatex` 等 PDF 引擎
+- **通过扩展名检测**：文档格式的源/目标类型通过文件扩展名推断
+
+### 函数
+
+| 函数 | 说明 | 返回值 |
+|------|------|--------|
+| `DocumentConvert(srcPath, dstPath)` | 文档格式转换 | `error` |
+| `IsPandocAvailable()` | 检查 pandoc 是否已安装 | `bool` |
+
+```go
+// Markdown → DOCX
+err := format_conversion.DocumentConvert("readme.md", "readme.docx")
+
+// Markdown → HTML
+err := format_conversion.DocumentConvert("readme.md", "readme.html")
+
+// Markdown → PDF（需要 PDF 引擎）
+err := format_conversion.DocumentConvert("report.md", "report.pdf")
+
+// DOCX → Markdown
+err := format_conversion.DocumentConvert("document.docx", "document.md")
+
+// HTML → TXT
+err := format_conversion.DocumentConvert("page.html", "page.txt")
+
+// PDF → TXT
+err := format_conversion.DocumentConvert("paper.pdf", "paper.txt")
+
+// 批量文档转换
+err := format_conversion.BatchConvert("./docs", ".md", ".docx")
+
+// 检查 pandoc 是否可用
+if format_conversion.IsPandocAvailable() {
+    // pandoc 已安装
+}
+```
+
+---
+
 ## 便捷函数
 
 | 函数 | 说明 | 返回值 |
 |------|------|--------|
 | `SupportedFormats()` | 所有支持格式列表 | `[]string` |
 | `SupportedConversions()` | 支持的转换列表 | `[]string` |
+| `IsPandocAvailable()` | 检查 pandoc 是否已安装 | `bool` |
 
 ```go
 for _, f := range format_conversion.SupportedFormats() {
     fmt.Println(f)
 }
-// 输出: PNG, JPG/JPEG, BMP, ICO, WEBP, WAV, MP3, OGG, MP4, MOV, GIF
+// 输出: PNG, JPG/JPEG, BMP, ICO, WEBP, GIF, WAV, MP3, OGG, MP4, MOV,
+//       Markdown, DOC, DOCX, ODT, HTML, RTF, PDF, TXT
 
 for _, c := range format_conversion.SupportedConversions() {
     fmt.Println(c)
 }
-// 输出: PNG ↔ BMP, PNG → JPG, ...
+// 输出: PNG ↔ BMP, PNG → JPG, ..., Markdown ↔ DOCX/ODT/HTML/RTF/TXT, ...
 ```
 
 ---
@@ -328,17 +388,29 @@ if err == nil {
 }
 ```
 
+### 场景5：文档格式批量迁移
+
+```go
+// 将所有 Markdown 文档转为 DOCX
+format_conversion.BatchConvert("./docs", ".md", ".docx")
+
+// 从 PDF 提取文本内容
+format_conversion.Convert("report.pdf", "report.txt")
+```
+
 ---
 
 ## Shellcode - 交互式格式转换 Shell
 
-`Shellcode` 函数启动一个交互式格式转换 shell，提示符为 `fmt>>`，支持格式检测、文件转换、批量处理等操作。
+`ShellCode` 函数启动一个基于 bash 的交互式格式转换 shell，提示符为 `fmt>>`，支持格式检测、文件转换、批量处理等操作，同时可以直接使用系统命令（ls、cat、echo 等）。
+
+启动时自动进行依赖检查，显示 pandoc、ffmpeg、ImageMagick 的安装状态。**Windows 用户**如果缺少组件会收到明确的安装提示。
 
 ### 启动方式
 
 ```go
-// 基础交互式 Shell
-format_conversion.Shellcode()
+// 基础交互式 Shell（自动依赖检查）
+format_conversion.ShellCode()
 
 // 脚本执行模式
 err := format_conversion.ShellcodeScript("commands.txt")
@@ -351,65 +423,122 @@ format_conversion.ShellcodeWithHistory()
 
 | 命令 | 说明 | 示例 |
 |------|------|------|
-| `convert <src> <dst>` | 单个文件格式转换 | `convert icon.png icon.ico` |
-| `batch <dir> <srcExt> <dstExt>` | 批量转换目录下文件 | `batch ./img .png .webp` |
-| `info <path>` | 查看文件格式信息 | `info photo.jpg` |
-| `detect <path>` | 检测文件真实格式（魔数 + 扩展名） | `detect unknown.bin` |
-| `formats` | 列出所有支持格式和转换 | `formats` |
-| `help` | 显示帮助 | `help` |
+| `fmt convert <src> <dst>` | 单个文件格式转换 | `fmt convert icon.png icon.ico` |
+| `fmt batch <dir> <srcExt> <dstExt>` | 批量转换目录下文件 | `fmt batch ./img .png .webp` |
+| `fmt info <path>` | 查看文件格式信息 | `fmt info photo.jpg` |
+| `fmt detect <path>` | 检测文件真实格式（魔数 + 扩展名） | `fmt detect unknown.bin` |
+| `fmt formats` | 列出所有支持格式和转换 | `fmt formats` |
+| `fmt pandoc` | 检查 pandoc 安装状态及使用提示 | `fmt pandoc` |
+| `fmt help` | 显示帮助 | `fmt help` |
 | `exit` / `quit` / `q` | 退出 | `exit` |
+
+### 依赖检查示例
+
+启动 ShellCode 时会自动输出依赖状态：
+
+```
+依赖检查:
+  pandoc: 已安装
+  ImageMagick (magick): 已安装
+  ffmpeg: 已安装
+```
+
+在 Windows 上缺失组件时会显示：
+
+```
+依赖检查:
+  pandoc: 未安装 (文档转换功能将不可用)
+  ImageMagick (convert): 已安装
+  ffmpeg: 未安装 (音频/视频/GIF 转换功能将不可用)
+
++----------------------------------------------------------+
+|  Windows 用户注意:                                       |
+|  部分功能需要额外安装以下组件才能完整体验:               |
+|    pandoc: https://pandoc.org/installing.html            |
+|             winget install pandoc                        |
+|    ffmpeg: https://ffmpeg.org/download.html              |
+|             winget install ffmpeg                        |
++----------------------------------------------------------+
+```
 
 ### 使用示例
 
 ```bash
-$ go run -exec "format_conversion.Shellcode"
-=== 格式转换 Shell ===
-输入 help 查看帮助，输入 exit 退出
+$ go run ./examples/main.go
+依赖检查:
+  pandoc: 已安装
+  ffmpeg: 已安装
+  ImageMagick: 已安装
 
-fmt>> info logo.png
-文件: logo.png
-  大小: 24576 bytes
-  格式: PNG
++----------------------------------------------------------+
+|     fmt shell  -  文件格式转换工具                       |
++----------------------------------------------------------+
 
-fmt>> convert logo.png favicon.ico
+  help              查看帮助
+  list              列出支持的格式
+  fmt convert <src> <dst>  转换文件
+  fmt batch <dir> <src> <dst>  批量转换
+  fmt info <file>   查看文件信息
+  fmt detect <file> 检测文件格式
+  fmt pandoc        检查 pandoc 状态
+  exit              退出
+  （可直接使用系统命令: ls, echo, pwd, cat ...）
+
+fmt>> fmt convert logo.png favicon.ico
 正在转换 logo.png -> favicon.ico ...
 转换成功: logo.png (PNG) -> favicon.ico (ICO)
 
-fmt>> batch ./photos .png .webp
-format_conversion: batch converted 15 files .png -> .webp
+fmt>> fmt convert readme.md readme.docx
+正在转换 readme.md -> readme.docx ...
+转换成功: readme.md (Markdown) -> readme.docx (DOCX)
 
-fmt>> detect unknown.bin
+fmt>> fmt batch ./docs .md .docx
+批量转换完成: 15 个文件 .md -> .docx
+
+fmt>> fmt detect unknown.bin
 文件: unknown.bin
   魔数检测: PNG
   扩展名检测: UNKNOWN
-  ⚠ 魔数与扩展名不一致!
+  警告: 魔数与扩展名不一致!
 
-fmt>> formats
+fmt>> fmt formats
 支持的格式:
   - PNG
   - JPG/JPEG
   - BMP
   - ICO
   - WEBP
+  - GIF
   - WAV
   - MP3
   - OGG
   - MP4
   - MOV
-  - GIF
+  - Markdown
+  - DOC
+  - DOCX
+  - ODT
+  - HTML
+  - RTF
+  - PDF
+  - TXT
 
 支持的转换:
   - PNG ↔ BMP
   - PNG → JPG
   ...
+  - Markdown ↔ DOCX/ODT/HTML/RTF/TXT
+  ...
+
+fmt>> ls test/
+test.png  test.docx  test.md
 
 fmt>> exit
-再见!
 ```
 
 ### 脚本执行模式
 
-`ShellcodeScript` 支持从脚本文件读取命令并自动执行：
+`ShellCodeScript` 支持从脚本文件读取命令并自动执行：
 
 ```bash
 # batch_convert.txt
@@ -420,6 +549,8 @@ batch ./originals .jpg .webp
 convert brand/logo.png brand/favicon.ico
 # 转换音频
 batch ./audio .wav .mp3
+# 转换文档
+batch ./docs .md .docx
 ```
 
 ```go
@@ -438,7 +569,7 @@ import "github.com/xiguayiqiu/gyscan_code/format_conversion"
 
 func main() {
     // 方式1：交互式 Shell
-    format_conversion.Shellcode()
+    format_conversion.ShellCode()
 
     // 方式2：脚本批量转换
     if err := format_conversion.ShellcodeScript("convert_script.txt"); err != nil {
@@ -447,6 +578,7 @@ func main() {
 
     // 方式3：直接调用 API
     format_conversion.Convert("image.png", "image.webp")
+    format_conversion.DocumentConvert("readme.md", "readme.docx")
 }
 ```
 
@@ -474,6 +606,14 @@ func main() {
         ├─ .png   → PNG
         ├─ .jpg   → JPG
         ├─ .wav   → WAV
+        ├─ .md    → Markdown
+        ├─ .doc   → DOC
+        ├─ .docx  → DOCX
+        ├─ .odt   → ODT
+        ├─ .html  → HTML
+        ├─ .rtf   → RTF
+        ├─ .pdf   → PDF
+        ├─ .txt   → TXT
         └─ 未知   → UNKNOWN
 ```
 

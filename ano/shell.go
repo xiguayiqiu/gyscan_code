@@ -270,8 +270,8 @@ func cmdBuild(args []string) {
 
 	if pkt != nil {
 		fmt.Println(ano.HexDump(pkt.Bytes()))
-		fmt.Printf("Total: %%d bytes\n", len(pkt.Bytes()))
-		fmt.Printf("Layers: %%s\n", pkt.Show())
+		fmt.Printf("总计: %%d 字节\n", len(pkt.Bytes()))
+		fmt.Printf("层次: %%s\n", pkt.Show())
 	}
 }
 
@@ -502,7 +502,7 @@ func cmdEval(code string) {
 	src := fmt.Sprintf(_EVAL_TPL, code)
 	tmp, err := os.CreateTemp("", "anoeval_*.go")
 	if err != nil {
-		fmt.Println("Error:", err)
+		fmt.Println("错误:", err)
 		return
 	}
 	defer os.Remove(tmp.Name())
@@ -527,9 +527,16 @@ func cmdImport(args []string) {
 		fmt.Println("用法: ano import <pcap文件>")
 		fmt.Println()
 		fmt.Println("导入 pcap 文件后进入解析模式，支持以下命令:")
-		fmt.Println("  cat           查看数据包列表")
-		fmt.Println("  cat <序号>    查看数据包详情")
-		fmt.Println("  quit          退出解析模式")
+		fmt.Println("  cat                    查看数据包列表")
+		fmt.Println("  cat <序号>             查看数据包详情")
+		fmt.Println("  cat list               查看数据包列表")
+		fmt.Println("  cat list <起始>-<终点>  查看数据包范围（如：20-30）")
+		fmt.Println("  cat list <序号>,<序号>  查看指定数据包（如：3,7,15）")
+		fmt.Println("  cat bpf <表达式>        显示过滤器过滤数据包（如：tcp.port==80）")
+		fmt.Println("  cat bpf help           显示过滤器支持的字段和语法")
+		fmt.Println("  help                   显示帮助")
+		fmt.Println("  !<命令>                执行系统命令（如：!ls -la）")
+		fmt.Println("  quit                   退出解析模式")
 		return
 	}
 	pl, err := ano.LoadPacketList(args[0])
@@ -541,7 +548,7 @@ func cmdImport(args []string) {
 	if pl.Len() == 0 {
 		return
 	}
-	fmt.Println("输入 cat 查看列表, cat <序号> 查看详情, quit 退出")
+	fmt.Println("输入 help 查看命令, quit 退出, !命令 执行系统命令")
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
 		fmt.Print("ano(pcap)>> ")
@@ -549,19 +556,182 @@ func cmdImport(args []string) {
 			break
 		}
 		line := strings.TrimSpace(scanner.Text())
-		if line == "quit" {
+		if line == "" {
+			continue
+		}
+		if line == "quit" || line == "exit" {
 			break
 		}
-		if line == "cat" {
+		if line == "help" {
+			fmt.Println()
+			fmt.Println("pcap 解析模式命令:")
+			fmt.Println("  cat                    查看数据包列表")
+			fmt.Println("  cat <序号>             查看数据包详情")
+			fmt.Println("  cat list               查看数据包列表")
+			fmt.Println("  cat list <起>-<终>      查看范围（如：20-30）")
+			fmt.Println("  cat list <序>,<序>      查看指定（如：3,7,15）")
+			fmt.Println("  cat bpf <表达式>        显示过滤器过滤数据包")
+			fmt.Println("  cat bpf help           查看过滤器字段和语法帮助")
+			fmt.Println("  help                   显示帮助")
+			fmt.Println("  !<命令>                 执行系统命令（如：!ls, !pwd）")
+			fmt.Println("  quit / exit             退出解析模式")
+			fmt.Println()
+			continue
+		}
+		if line[0] == '!' {
+			cmdStr := strings.TrimSpace(line[1:])
+			if cmdStr == "" {
+				continue
+			}
+			parts := strings.Fields(cmdStr)
+			cmd := exec.Command(parts[0], parts[1:]...)
+			cmd.Stdin = os.Stdin
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			cmd.Run()
+			continue
+		}
+		if line == "cat" || line == "cat list" {
 			pl.PrintList()
+		} else if strings.HasPrefix(line, "cat bpf ") {
+			bpfExpr := strings.TrimSpace(line[8:])
+			if bpfExpr == "help" {
+				printBPFHelp()
+			} else {
+				filtered, err := pl.FilterByDisplay(bpfExpr)
+				if err != nil {
+					fmt.Println("过滤器错误:", err)
+				} else if filtered.Len() == 0 {
+					fmt.Println("没有匹配的数据包")
+				} else {
+					fmt.Printf("匹配 %%d / %%d 个数据包:\n\n", filtered.Len(), pl.Len())
+					filtered.PrintList()
+				}
+			}
 		} else if len(line) > 4 && line[:4] == "cat " {
 			idxStr := strings.TrimSpace(line[4:])
-			idx := atoi(idxStr)
-			pl.Show(idx)
-		} else if line != "" {
-			fmt.Println("未知命令，可用: cat, cat <序号>, quit")
+			if strings.HasPrefix(idxStr, "list ") {
+				listStr := strings.TrimSpace(idxStr[5:])
+				if strings.Contains(listStr, ",") {
+					parts := strings.Split(listStr, ",")
+					var indices []int
+					for _, p := range parts {
+						indices = append(indices, atoi(strings.TrimSpace(p)))
+					}
+					pl.ShowIndices(indices)
+				} else if strings.Contains(listStr, "-") {
+					parts := strings.SplitN(listStr, "-", 2)
+					start := atoi(strings.TrimSpace(parts[0]))
+					end := atoi(strings.TrimSpace(parts[1]))
+					pl.ShowRange(start, end)
+				} else {
+					fmt.Println("用法: cat list <序号>,<序号> 或 cat list <起始>-<终点>")
+				}
+			} else {
+				idx := atoi(idxStr)
+				pl.Show(idx)
+			}
+		} else {
+			fmt.Println("未知命令，输入 help 查看帮助, !命令 执行系统命令")
 		}
 	}
+}
+
+func printBPFHelp() {
+	fmt.Println()
+	fmt.Println("=== 显示过滤器 (Display Filter) 帮助 ===")
+	fmt.Println()
+	fmt.Println("语法规则:")
+	fmt.Println("  等于: ==    不等于: !=    大于: >    小于: <")
+	fmt.Println("  包含: contains    与: &&    或: ||    非: !")
+	fmt.Println("  分组: ()    引号: \"值\" 或 '值'")
+	fmt.Println()
+	fmt.Println("常用组合示例:")
+	fmt.Println("  tcp.flags.syn==1 && tcp.flags.ack==0      只抓SYN握手")
+	fmt.Println("  tcp.flags.fin==1                          结束挥手")
+	fmt.Println("  ip.src==192.168.1.1 && tcp.port==443      指定IP+HTTPS")
+	fmt.Println("  udp.port==53                              DNS流量")
+	fmt.Println("  dns.qry.type==1                           A记录查询")
+	fmt.Println()
+	fmt.Println("=== 通用/帧字段 ===")
+	fmt.Println("  frame.len              数据包总长")
+	fmt.Println("  frame.cap_len          实际抓取长度")
+	fmt.Println("  eth.src                源MAC地址")
+	fmt.Println("  eth.dst                目的MAC地址")
+	fmt.Println("  eth.type               以太网类型")
+	fmt.Println()
+	fmt.Println("=== IP 字段 ===")
+	fmt.Println("  ip.version             IP版本")
+	fmt.Println("  ip.src                 源IP")
+	fmt.Println("  ip.dst                 目的IP")
+	fmt.Println("  ip.ttl                 TTL")
+	fmt.Println("  ip.id                  IP标识")
+	fmt.Println("  ip.proto               协议号 (6=TCP, 17=UDP, 1=ICMP)")
+	fmt.Println("  ip.flags.df            不分片标志 (1=设置)")
+	fmt.Println("  ip.flags.mf            更多分片标志 (1=设置)")
+	fmt.Println("  ip.frag_offset         分片偏移")
+	fmt.Println()
+	fmt.Println("=== TCP 字段 ===")
+	fmt.Println("  tcp.srcport            源端口")
+	fmt.Println("  tcp.dstport            目的端口")
+	fmt.Println("  tcp.port               任意端口 (匹配源或目的)")
+	fmt.Println("  tcp.seq                序列号")
+	fmt.Println("  tcp.ack                确认号")
+	fmt.Println("  tcp.hdr_len            TCP头部长度 (字节)")
+	fmt.Println("  tcp.window_size        窗口大小")
+	fmt.Println("  tcp.checksum           校验和")
+	fmt.Println("  tcp.urgent_pointer     紧急指针")
+	fmt.Println("  tcp.flags              所有标志位 (十六进制)")
+	fmt.Println("  tcp.flags.syn          SYN标志 (1=设置)")
+	fmt.Println("  tcp.flags.ack          ACK标志 (1=设置)")
+	fmt.Println("  tcp.flags.fin          FIN标志 (1=设置)")
+	fmt.Println("  tcp.flags.rst          RST标志 (1=设置)")
+	fmt.Println("  tcp.flags.psh          PSH标志 (1=设置)")
+	fmt.Println("  tcp.flags.urg          URG标志 (1=设置)")
+	fmt.Println("  tcp.flags.cwr          CWR标志 (1=设置)")
+	fmt.Println("  tcp.flags.ece          ECE标志 (1=设置)")
+	fmt.Println()
+	fmt.Println("=== UDP 字段 ===")
+	fmt.Println("  udp.srcport            源端口")
+	fmt.Println("  udp.dstport            目的端口")
+	fmt.Println("  udp.port               任意端口 (匹配源或目的)")
+	fmt.Println("  udp.length             UDP总长")
+	fmt.Println("  udp.checksum           UDP校验和")
+	fmt.Println()
+	fmt.Println("=== ICMP 字段 ===")
+	fmt.Println("  icmp.type              ICMP类型 (8=请求, 0=应答, 3=不可达)")
+	fmt.Println("  icmp.code              子类型码")
+	fmt.Println("  icmp.identifier        ping标识符")
+	fmt.Println("  icmp.sequence          ping序号")
+	fmt.Println()
+	fmt.Println("=== ARP 字段 ===")
+	fmt.Println("  arp.opcode             操作码 (1=请求, 2=应答)")
+	fmt.Println("  arp.src.hw_mac         源MAC")
+	fmt.Println("  arp.dst.hw_mac         目的MAC")
+	fmt.Println("  arp.src.proto_ipv4     源IP")
+	fmt.Println("  arp.dst.proto_ipv4     目的IP")
+	fmt.Println()
+	fmt.Println("=== DNS 字段 ===")
+	fmt.Println("  dns.id                 DNS事务ID")
+	fmt.Println("  dns.flags.response     响应标志 (1=响应)")
+	fmt.Println("  dns.flags.opcode       操作码")
+	fmt.Println("  dns.flags.aa           权威应答 (1=设置)")
+	fmt.Println("  dns.flags.tc           截断 (1=设置)")
+	fmt.Println("  dns.flags.rd           递归查询 (1=设置)")
+	fmt.Println("  dns.flags.ra           递归可用 (1=设置)")
+	fmt.Println("  dns.qry.name           查询域名")
+	fmt.Println("  dns.qry.type           查询类型 (1=A, 28=AAAA)")
+	fmt.Println("  dns.resp.name          响应域名")
+	fmt.Println("  dns.resp.type          响应类型")
+	fmt.Println()
+	fmt.Println("示例:")
+	fmt.Println("  cat bpf tcp.port==80")
+	fmt.Println("  cat bpf ip.src==192.168.1.1")
+	fmt.Println("  cat bpf tcp.flags.syn==1 && tcp.flags.ack==0")
+	fmt.Println("  cat bpf udp.port==53")
+	fmt.Println("  cat bpf dns.qry.name contains google")
+	fmt.Println("  cat bpf arp.opcode==1")
+	fmt.Println()
 }
 
 func cmdCraft(args []string) {

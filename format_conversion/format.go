@@ -20,34 +20,58 @@ const (
 	FormatMP4
 	FormatMOV
 	FormatGIF
+	FormatMarkdown
+	FormatDOC
+	FormatDOCX
+	FormatODT
+	FormatHTML
+	FormatRTF
+	FormatPDF
+	FormatTXT
 )
 
 var formatNames = map[FormatType]string{
-	FormatPNG:  "PNG",
-	FormatJPG:  "JPG",
-	FormatBMP:  "BMP",
-	FormatICO:  "ICO",
-	FormatWEBP: "WEBP",
-	FormatWAV:  "WAV",
-	FormatMP3:  "MP3",
-	FormatOGG:  "OGG",
-	FormatMP4:  "MP4",
-	FormatMOV:  "MOV",
-	FormatGIF:  "GIF",
+	FormatPNG:      "PNG",
+	FormatJPG:      "JPG",
+	FormatBMP:      "BMP",
+	FormatICO:      "ICO",
+	FormatWEBP:     "WEBP",
+	FormatWAV:      "WAV",
+	FormatMP3:      "MP3",
+	FormatOGG:      "OGG",
+	FormatMP4:      "MP4",
+	FormatMOV:      "MOV",
+	FormatGIF:      "GIF",
+	FormatMarkdown: "Markdown",
+	FormatDOC:      "DOC",
+	FormatDOCX:     "DOCX",
+	FormatODT:      "ODT",
+	FormatHTML:     "HTML",
+	FormatRTF:      "RTF",
+	FormatPDF:      "PDF",
+	FormatTXT:      "TXT",
 }
 
 var formatExtensions = map[FormatType][]string{
-	FormatPNG:  {".png"},
-	FormatJPG:  {".jpg", ".jpeg"},
-	FormatBMP:  {".bmp"},
-	FormatICO:  {".ico"},
-	FormatWEBP: {".webp"},
-	FormatWAV:  {".wav", ".wave"},
-	FormatMP3:  {".mp3"},
-	FormatOGG:  {".ogg", ".oga"},
-	FormatMP4:  {".mp4"},
-	FormatMOV:  {".mov"},
-	FormatGIF:  {".gif"},
+	FormatPNG:      {".png"},
+	FormatJPG:      {".jpg", ".jpeg"},
+	FormatBMP:      {".bmp"},
+	FormatICO:      {".ico"},
+	FormatWEBP:     {".webp"},
+	FormatWAV:      {".wav", ".wave"},
+	FormatMP3:      {".mp3"},
+	FormatOGG:      {".ogg", ".oga"},
+	FormatMP4:      {".mp4"},
+	FormatMOV:      {".mov"},
+	FormatGIF:      {".gif"},
+	FormatMarkdown: {".md", ".markdown"},
+	FormatDOC:      {".doc"},
+	FormatDOCX:     {".docx"},
+	FormatODT:      {".odt"},
+	FormatHTML:     {".html", ".htm"},
+	FormatRTF:      {".rtf"},
+	FormatPDF:      {".pdf"},
+	FormatTXT:      {".txt"},
 }
 
 func (f FormatType) String() string {
@@ -163,8 +187,12 @@ func ConvertBytes(data []byte, srcFmt, dstFmt FormatType) ([]byte, error) {
 		return convertAudio(data, srcFmt, dstFmt)
 	case isVideoFormat(srcFmt) && isVideoFormat(dstFmt):
 		return convertVideo(data, srcFmt, dstFmt)
+	case isVideoFormat(srcFmt) && dstFmt == FormatGIF:
+		return videoToGIF(data, srcFmt)
 	case isVideoFormat(srcFmt) && isAudioFormat(dstFmt):
 		return extractAudio(data, srcFmt, dstFmt)
+	case isDocumentFormat(srcFmt) && isDocumentFormat(dstFmt):
+		return convertDocument(data, srcFmt, dstFmt)
 	default:
 		return nil, fmt.Errorf("format_conversion: unsupported conversion %s -> %s", srcFmt, dstFmt)
 	}
@@ -189,6 +217,14 @@ func isAudioFormat(f FormatType) bool {
 func isVideoFormat(f FormatType) bool {
 	switch f {
 	case FormatMP4, FormatMOV:
+		return true
+	}
+	return false
+}
+
+func isDocumentFormat(f FormatType) bool {
+	switch f {
+	case FormatMarkdown, FormatDOC, FormatDOCX, FormatODT, FormatHTML, FormatRTF, FormatPDF, FormatTXT:
 		return true
 	}
 	return false

@@ -773,7 +773,14 @@ ano>> ano import capture.pcap
 | 命令 | 说明 |
 |------|------|
 | `cat` | 查看数据包列表（带序号和摘要） |
-| `cat <序号>` | 查看指定数据包的 Hex 转储和逐层详情 |
+| `cat <序号>` | 查看指定数据包的详情（Hex 转储和逐层 OSI 模型解析） |
+| `cat list` | 查看数据包列表 |
+| `cat list <起>-<终>` | 查看范围数据包（如：20-30） |
+| `cat list <序>,<序>` | 查看指定数据包（如：3,7,15） |
+| `cat bpf <表达式>` | 显示过滤器过滤数据包 |
+| `cat bpf help` | 查看过滤器字段和语法帮助 |
+| `help` | 显示帮助 |
+| `!<命令>` | 执行系统命令 |
 | `quit` | 退出解析模式，返回 ano shell |
 
 示例：
@@ -781,19 +788,63 @@ ano>> ano import capture.pcap
 ```bash
 ano>> ano import test.pcap
 成功导入 10 个数据包
-输入 cat 查看列表, cat <序号> 查看详情, quit 退出
+输入 help 查看命令, quit 退出, !命令 执行系统命令
 ano(pcap)>> cat
 [1] 10.0.0.1:54321 > 192.168.1.1:80
 [2] 192.168.1.1:80 > 10.0.0.1:54321
 ...
 ano(pcap)>> cat 1
+帧 1: 线路 54 字节 (432 位), 捕获 54 字节 (432 位)
+
+以太网 II, 源: 00:de:ad:be:ef:01 目的: ff:ff:ff:ff:ff:ff
+    目的MAC: ff:ff:ff:ff:ff:ff (广播)         [0..5]
+    源MAC: 00:de:ad:be:ef:01                  [6..11]
+    类型: IPv4 (0x0800)                       [12..13]
+
+互联网协议版本 4, 源: 10.0.0.1, 目的: 192.168.1.1
+    0100 .... = 版本: 4                       [14]
+    .... 0101 = 头部长度: 20 字节 (5)          [14]
+    区分服务字段: 0x00 (DSCP: 0x00, ECN: 0x00) [15]
+    总长度: 40                                [16..17]
+    标识: 0x0000 (0)                          [18..19]
+    标志: 0x0                                 [20..21]
+    分片偏移: 0                               [20..21]
+    生存时间: 64                               [22]
+    协议: TCP (6)                             [23]
+    头部校验和: 0xf41e                        [24..25]
+    源地址: 10.0.0.1                          [26..29]
+    目的地址: 192.168.1.1                      [30..33]
+
+传输控制协议, 源端口: 54321, 目的端口: 80
+    源端口: 54321                             [34..35]
+    目的端口: 80                              [36..37]
+    序号 (原始): 0                            [38..41]
+    确认号 (原始): 0                           [42..45]
+    0101 .... = 头部长度: 20 字节 (5)          [46]
+    .... 0000 = 保留
+    标志位: 0x002                             [47]
+    .... ...1 = SYN: 已设置
+    窗口大小: 65535                            [48..49]
+    校验和: 0x0000                            [50..51]
+    紧急指针: 0                               [52..53]
+
 0000   ff ff ff ff ff ff 00 de ad be ef 01 08 00  |..............|
-...
-Total: 54 bytes
-Layers: Ether > IPv4 > TCP
-  Ether: 00:de:ad:be:ef:01 > ff:ff:ff:ff:ff:ff type=0x0800
-  IPv4:  10.0.0.1 > 192.168.1.1 ttl=64 proto=6
-  TCP:   54321->80 seq=0 flags=SYN window=65535
+0010   45 00 00 28 00 00 40 00 40 06 f4 1e 0a 00  |E..(..@.@.....|
+0020   00 01 c0 a8 01 01 d4 31 00 50 00 00 00 00  |.......1.P....|
+0030   00 00 00 00 50 02 ff ff 00 00 00 00 00 00  |....P.........|
+
+ano(pcap)>> cat bpf tcp.port==80
+匹配 1 / 10 个数据包:
+
+[1] 10.0.0.1:54321 > 192.168.1.1:80
+
+ano(pcap)>> cat bpf ip.src==192.168.1.1 || udp.port==53
+匹配 3 / 10 个数据包:
+
+[1] 192.168.1.1:80 > 10.0.0.1:54321
+[2] 10.0.0.1:12345 > 8.8.8.8:53
+[3] 8.8.8.8:53 > 10.0.0.1:12345
+
 ano(pcap)>> quit
 ano>>
 ```
@@ -1008,6 +1059,321 @@ err := ano.SetSocketBPF(fd, "udp port 53")
 | `SetSocketBPF(fd, expr)` | 编译并附加 BPF 过滤器到 socket fd |
 | `SniffWithFilter(iface, timeout, count, filter)` | 带过滤的便捷嗅探 |
 | `RawSocket.SetBPF(expr)` | 在原始套接字上设置 BPF 过滤器 |
+
+### BPF 显示过滤器规则
+
+> **另见**：[Shell 中使用 `cat bpf <表达式>`](#cat-bpf-命令) | [Go 库函数 API](#go-库函数-api-1)
+
+ano 提供了 Wireshark 风格的 **显示过滤器（Display Filter）**，可在已捕获的数据包列表上按条件过滤。与 BPF 捕获过滤器不同，显示过滤器支持 `协议.字段` 格式的丰富字段条件。
+
+---
+
+#### 规则索引（完整字段列表）
+
+以下是 `cat bpf` 和 `FilterPackets` 等 API 支持的 **全部 50+ 条 BPF 规则**，按协议分类：
+
+| 分类 | 字段 | 说明 | 值范围/示例 |
+|------|------|------|-------------|
+| **帧** | `frame.len` | 数据包总长 | `frame.len>100` |
+| | `frame.cap_len` | 实际抓取长度 | `frame.cap_len==1514` |
+| **以太网** | `eth.src` | 源 MAC 地址 | `eth.src==00:de:ad:be:ef:01` |
+| | `eth.dst` | 目的 MAC 地址 | `eth.dst==ff:ff:ff:ff:ff:ff` |
+| | `eth.type` | 以太网类型 | `eth.type==0x0800` |
+| **IP** | `ip.version` | IP 版本 | `ip.version==4` |
+| | `ip.src` | 源 IP | `ip.src==192.168.1.1` |
+| | `ip.dst` | 目的 IP | `ip.dst==10.0.0.1` |
+| | `ip.ttl` | TTL 生存时间 | `ip.ttl>64` |
+| | `ip.id` | IP 标识 | `ip.id==0x1234` |
+| | `ip.proto` | 协议号 | `ip.proto==6` (6=TCP, 17=UDP, 1=ICMP) |
+| | `ip.flags.df` | 不分片标志 | `ip.flags.df==1` |
+| | `ip.flags.mf` | 更多分片标志 | `ip.flags.mf==1` |
+| | `ip.frag_offset` | 分片偏移 | `ip.frag_offset>0` |
+| **TCP** | `tcp.srcport` | 源端口 | `tcp.srcport==12345` |
+| | `tcp.dstport` | 目的端口 | `tcp.dstport==80` |
+| | `tcp.port` | 源或目的端口 (任意匹配) | `tcp.port==443` |
+| | `tcp.seq` | 序列号 | `tcp.seq==1000` |
+| | `tcp.ack` | 确认号 | `tcp.ack==1` |
+| | `tcp.hdr_len` | TCP 头部长度 (字节) | `tcp.hdr_len>20` |
+| | `tcp.window_size` | 窗口大小 | `tcp.window_size<1024` |
+| | `tcp.checksum` | 校验和 | `tcp.checksum==0x0000` |
+| | `tcp.urgent_pointer` | 紧急指针 | `tcp.urgent_pointer>0` |
+| | `tcp.flags` | 所有标志位 (十六进制) | `tcp.flags==0x02` |
+| | `tcp.flags.syn` | SYN 标志 (1=设置) | `tcp.flags.syn==1` |
+| | `tcp.flags.ack` | ACK 标志 (1=设置) | `tcp.flags.ack==1` |
+| | `tcp.flags.fin` | FIN 标志 (1=设置) | `tcp.flags.fin==1` |
+| | `tcp.flags.rst` | RST 标志 (1=设置) | `tcp.flags.rst==1` |
+| | `tcp.flags.psh` | PSH 标志 (1=设置) | `tcp.flags.psh==1` |
+| | `tcp.flags.urg` | URG 标志 (1=设置) | `tcp.flags.urg==1` |
+| | `tcp.flags.cwr` | CWR 标志 (1=设置) | `tcp.flags.cwr==1` |
+| | `tcp.flags.ece` | ECE 标志 (1=设置) | `tcp.flags.ece==1` |
+| **UDP** | `udp.srcport` | 源端口 | `udp.srcport==53` |
+| | `udp.dstport` | 目的端口 | `udp.dstport==12345` |
+| | `udp.port` | 源或目的端口 (任意匹配) | `udp.port==53` |
+| | `udp.length` | UDP 总长 | `udp.length>100` |
+| | `udp.checksum` | UDP 校验和 | `udp.checksum==0x0000` |
+| **ICMP** | `icmp.type` | ICMP 类型 | `icmp.type==8` (8=请求, 0=应答, 3=不可达) |
+| | `icmp.code` | 子类型码 | `icmp.code==0` |
+| | `icmp.identifier` | ping 标识符 | `icmp.identifier==1` |
+| | `icmp.sequence` | ping 序号 | `icmp.sequence==1` |
+| **ARP** | `arp.opcode` | 操作码 | `arp.opcode==1` (1=请求, 2=应答) |
+| | `arp.src.hw_mac` | 源 MAC | `arp.src.hw_mac==00:de:ad:be:ef:01` |
+| | `arp.dst.hw_mac` | 目的 MAC | `arp.dst.hw_mac==ff:ff:ff:ff:ff:ff` |
+| | `arp.src.proto_ipv4` | 源 IP | `arp.src.proto_ipv4==192.168.1.100` |
+| | `arp.dst.proto_ipv4` | 目的 IP | `arp.dst.proto_ipv4==192.168.1.1` |
+| **DNS** | `dns.id` | DNS 事务 ID | `dns.id==0x1234` |
+| | `dns.flags.response` | 响应标志 | `dns.flags.response==1` |
+| | `dns.flags.opcode` | 操作码 | `dns.flags.opcode==0` |
+| | `dns.flags.aa` | 权威应答 | `dns.flags.aa==1` |
+| | `dns.flags.tc` | 截断 | `dns.flags.tc==1` |
+| | `dns.flags.rd` | 递归查询 | `dns.flags.rd==1` |
+| | `dns.flags.ra` | 递归可用 | `dns.flags.ra==1` |
+| | `dns.qry.name` | 查询域名 | `dns.qry.name contains google` |
+| | `dns.qry.type` | 查询类型 | `dns.qry.type==1` (1=A, 28=AAAA) |
+| | `dns.resp.name` | 响应域名 | `dns.resp.name contains example` |
+| `dns.resp.type` | 响应类型 | `dns.resp.type==1` |
+| **TLS** | `tls.record.content_type` | TLS 记录层内容类型 | `tls.record.content_type==22` (22=握手) |
+| | `tls.record.version` | TLS 记录层版本 | `tls.record.version==0x0301` |
+| | `tls.handshake.type` | 握手消息类型 | `tls.handshake.type==1` (1=ClientHello) |
+| | `tls.handshake.version` | 握手版本 | `tls.handshake.version==0x0301` |
+| | `tls.handshake.sni` | 服务器名称指示 (SNI) | `tls.handshake.sni contains example` |
+| | `tls.handshake.cipher_suites` | 加密套件列表 | `tls.handshake.cipher_suites contains 0x1301` |
+| | `tls.handshake.random` | 随机数 | `tls.handshake.random!=0` |
+
+---
+
+#### TLS 协议构造与解析
+
+ano 支持完整的 TLS 协议构造和解析，包括 TLS 记录层和握手层。
+
+##### TLS ClientHello 构造
+
+```go
+// 构造 TLS ClientHello
+tlsHello := ano.NewTLSClientHello("example.com")
+
+// 层叠构造完整数据包
+pkt := ano.Build(
+    ano.NewEther(),
+    ano.NewIPv4().SetSrc("10.0.0.1").SetDst("93.184.216.34"),
+    ano.NewTCP().SetSPort(54321).SetDPort(443).SetFlags(ano.TCP_SYN|ano.TCP_ACK),
+    tlsHello,
+)
+
+// 查看 TLS 层
+tls := pkt.Get("TLS").(*ano.TLSRecord)
+fmt.Println("SNI:", tls.ServerName)  // example.com
+fmt.Println("Version:", tls.Version) // 0x0301
+```
+
+##### TLS 数据包解析
+
+导入 pcap 文件后，TLS 层会自动解析：
+
+```go
+pl, _ := ano.LoadPacketList("https_traffic.pcap")
+
+// 使用 BPF 过滤 TLS 流量
+filtered, _ := pl.FilterByDisplay("tls.record.content_type==22")
+filtered.PrintList()
+
+// 查找特定 SNI 的流量
+sniFiltered, _ := filtered.FilterByDisplay("tls.handshake.sni contains example")
+```
+
+##### TLS 显示过滤器示例
+
+```bash
+ano(pcap)>> cat bpf tls.record.content_type==22              # 所有握手包
+ano(pcap)>> cat bpf tls.handshake.type==1                    # ClientHello
+ano(pcap)>> cat bpf tls.handshake.type==2                    # ServerHello
+ano(pcap)>> cat bpf tls.handshake.sni contains example       # 指定 SNI
+ano(pcap)>> cat bpf tls.handshake.sni contains google && tcp.port==443
+```
+
+##### TLS Go API
+
+```go
+import "github.com/xiguayiqiu/gyscan_code/ano"
+
+// ========== TLS 数据包构造 ==========
+
+// 方式1: 使用 NewTLSClientHello
+pkt := ano.Build(
+    ano.NewEther(),
+    ano.NewIPv4().SetSrc("10.0.0.1").SetDst("93.184.216.34"),
+    ano.NewTCP().SetSPort(54321).SetDPort(443).SetFlags(ano.TCP_ACK|ano.TCP_PSH),
+    ano.NewTLSClientHello("example.com"),
+)
+
+// 方式2: 手动构造 TLSRecord
+tls := &ano.TLSRecord{
+    ContentType:   22,  // Handshake
+    Version:       0x0301,
+    HandshakeType: 1,   // ClientHello
+}
+pkt := ano.Build(ether, ip, tcp, tls)
+
+// ========== TLS 数据包解析 ==========
+
+pkts, _ := ano.LoadPcap("tls_traffic.pcap")
+
+// 遍历 TLS 包
+for _, pkt := range pkts {
+    tls := pkt.Get("TLS")
+    if tls != nil {
+        t := tls.(*ano.TLSRecord)
+        fmt.Printf("TLS %s SNI: %s\n",
+            ano.TLSContentTypeNames[t.ContentType],
+            t.ServerName)
+    }
+}
+
+// ========== TLS 过滤 ==========
+
+// 过滤 TLS 握手包
+handshakePkts, _ := ano.FilterPackets(pkts, "tls.record.content_type==22")
+
+// 过滤 ClientHello
+clientHello, _ := ano.FilterPackets(pkts, "tls.handshake.type==1")
+
+// 过滤特定 SNI
+sniPkts, _ := ano.FilterPackets(pkts, "tls.handshake.sni contains example.com")
+```
+
+##### TLS 字段参考
+
+| 字段 | 说明 | 值示例 |
+|------|------|--------|
+| `tls.record.content_type` | 记录层内容类型 | 22=握手, 20=ChangeCipherSpec, 21=Alert |
+| `tls.record.version` | 记录层版本 | 0x0301=TLS 1.0, 0x0303=TLS 1.2, 0x0304=TLS 1.3 |
+| `tls.handshake.type` | 握手消息类型 | 1=ClientHello, 2=ServerHello, 11=Certificate |
+| `tls.handshake.sni` | 服务器名称指示 | example.com |
+
+| TLSContentType 值 | 名称 | 说明 |
+|-------------------|------|------|
+| 20 | ChangeCipherSpec | 密码规格变更 |
+| 21 | Alert | 警报消息 |
+| 22 | Handshake | 握手协议 |
+| 23 | ApplicationData | 应用数据 |
+
+| HandshakeType 值 | 名称 |
+|------------------|------|
+| 0 | HelloRequest |
+| 1 | ClientHello |
+| 2 | ServerHello |
+| 4 | NewSessionTicket |
+| 8 | EncryptedExtensions |
+| 11 | Certificate |
+| 12 | CertificateVerify |
+| 13 | Finished |
+
+---
+
+#### 语法规则
+
+| 操作 | 语法 | 说明 |
+|------|------|------|
+| 等于 | `==` | `tcp.port==80` |
+| 不等于 | `!=` | `ip.src!=10.0.0.1` |
+| 大于 | `>` | `frame.len>100` |
+| 小于 | `<` | `ip.ttl<64` |
+| 包含 | `contains` | `dns.qry.name contains google` |
+| 与 | `&&` | `ip.src==1.1.1.1 && tcp.port==80` |
+| 或 | `\|\|` | `udp.port==53 \|\| tcp.port==53` |
+| 非 | `!` | `!(tcp.port==80)` |
+| 分组 | `()` | `(ip.src==A \|\| ip.src==B) && tcp.dstport==80` |
+
+---
+
+#### cat bpf 命令
+
+导入 pcap 文件后，在交互模式下使用：
+
+```bash
+ano(pcap)>> cat bpf tcp.port==80                          # HTTP 流量
+匹配 1 / 10 个数据包:
+
+[1] 10.0.0.1:54321 > 192.168.1.1:80
+
+ano(pcap)>> cat bpf tcp.flags.syn==1 && tcp.flags.ack==0 # 仅 SYN 握手包
+ano(pcap)>> cat bpf tcp.flags.fin==1                     # FIN 挥手包
+ano(pcap)>> cat bpf ip.src==192.168.1.1 && tcp.port==443 # 指定 IP+HTTPS
+ano(pcap)>> cat bpf udp.port==53                         # DNS 流量
+ano(pcap)>> cat bpf dns.qry.type==1                      # A 记录查询
+ano(pcap)>> cat bpf icmp.type==8                         # ICMP Echo 请求
+ano(pcap)>> cat bpf arp.opcode==1                        # ARP 请求
+ano(pcap)>> cat bpf !(tcp.port==80)                      # 非 HTTP 流量
+ano(pcap)>> cat bpf help                                 # 查看完整帮助
+```
+
+---
+
+#### Go 库函数 API
+
+显示过滤器提供了完整的 Go 库函数，可在代码中直接调用：
+
+```go
+import "github.com/xiguayiqiu/gyscan_code/ano"
+
+// ========== 解析过滤器表达式 ==========
+
+df, err := ano.ParseDisplayFilter("tcp.port==80 && ip.src==192.168.1.1")
+
+// ========== 单包匹配 ==========
+
+// 方式1: 先解析，复用过滤器对象
+df, _ := ano.ParseDisplayFilter("tcp.flags.syn==1")
+for _, pkt := range pkts {
+    if df.Match(pkt) {
+        fmt.Println("SYN 包:", pkt.Summary())
+    }
+}
+
+// 方式2: 一步完成
+ok, _ := ano.MatchFilter(pkt, "tcp.port==80")
+
+// ========== 列表过滤 ==========
+
+// PacketList 方法
+pl, _ := ano.LoadPacketList("capture.pcap")
+filtered, _ := pl.FilterByDisplay("udp.port==53")
+filtered.PrintList()
+
+// []*Packet 切片过滤
+pkts, _ := ano.LoadPcap("capture.pcap")
+httpPkts, _ := ano.FilterPackets(pkts, "tcp.port==80")
+
+// ========== 统计与查找 ==========
+
+synCount, _ := ano.CountByFilter(pkts, "tcp.flags.syn==1 && tcp.flags.ack==0")
+firstDNS, _ := ano.FirstByFilter(pkts, "udp.port==53")
+
+// ========== 实用组合示例 ==========
+
+// 提取 HTTP 流量并保存
+httpPkts, _ := ano.FilterPackets(pkts, "tcp.port==80")
+ano.SavePcap("http_only.pcap", httpPkts)
+
+// 统计协议分布
+tcpCount, _ := ano.CountByFilter(pkts, "ip.proto==6")
+udpCount, _ := ano.CountByFilter(pkts, "ip.proto==17")
+icmpCount, _ := ano.CountByFilter(pkts, "ip.proto==1")
+
+// 检测 SYN 扫描
+scanner, _ := ano.FirstByFilter(pkts, "ip.src==10.0.0.5 && tcp.flags.syn==1 && tcp.flags.ack==0")
+```
+
+#### Go API 参考
+
+| 函数 | 签名 | 说明 |
+|------|------|------|
+| `ParseDisplayFilter` | `(expr string) (*DisplayFilter, error)` | 解析表达式，返回可复用对象 |
+| `df.Match` | `(pkt *Packet) bool` | 测试单个数据包是否匹配 |
+| `MatchFilter` | `(pkt *Packet, expr string) (bool, error)` | 一步解析+匹配 |
+| `FilterPackets` | `(pkts []*Packet, expr string) ([]*Packet, error)` | 过滤 `[]*Packet` 切片 |
+| `CountByFilter` | `(pkts []*Packet, expr string) (int, error)` | 统计匹配数量 |
+| `FirstByFilter` | `(pkts []*Packet, expr string) (*Packet, error)` | 查找第一个匹配包 |
+| `pl.FilterByDisplay` | `(expr string) (*PacketList, error)` | 对 `PacketList` 过滤 |
 
 ---
 
@@ -1258,6 +1624,7 @@ ano.NewPacket().
 | `nic.go` | — | 网卡识别、便捷捕获、CAP/PCAP 导出 |
 | `sniffer.go` | `sniff.py` | 异步嗅探器 + BPF 过滤集成 |
 | `bpf.go` | — | BPF 表达式编译器 + setsockopt(SO_ATTACH_FILTER) |
+| `display.go` | — | Wireshark 风格显示过滤器解析引擎 |
 | `shell.go` | `main.py` (`interact()`) | 交互式 ShellCode 控制台 |
 | `pcap.go` | `utils.py(rdpcap/wrpcap)` | Pcap 读写、PacketList、ParseEther |
 | `rand.go` | `volatile.py` | 随机值生成 |

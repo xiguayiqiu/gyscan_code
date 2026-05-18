@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -227,8 +228,189 @@ func LoadCap(path string) ([]*Packet, error) {
 }
 
 func Dump(path string, pkts []*Packet) error {
-	if len(path) >= 4 && path[len(path)-4:] == ".cap" {
+	lower := strings.ToLower(path)
+	if strings.HasSuffix(lower, ".cap") {
 		return DumpCap(path, pkts)
 	}
 	return DumpPcap(path, pkts)
+}
+
+func ImportFile(path string) ([]*Packet, error) {
+	lower := strings.ToLower(path)
+	if strings.HasSuffix(lower, ".cap") {
+		return LoadCap(path)
+	}
+	return LoadPcap(path)
+}
+
+func ExportFile(path string, pkts []*Packet) error {
+	lower := strings.ToLower(path)
+	if strings.HasSuffix(lower, ".cap") {
+		return DumpCap(path, pkts)
+	}
+	return SavePcap(path, pkts)
+}
+
+type CapFileInfo struct {
+	Path       string
+	Format     string
+	Variant    PcapVariant
+	Magic      uint32
+	Version    uint16
+	SnapLen    uint32
+	LinkType   uint32
+	NumPackets int
+}
+
+func InspectCap(path string) (*CapFileInfo, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("ano: inspect: %w", err)
+	}
+	defer f.Close()
+
+	var magic uint32
+	if err := binary.Read(f, binary.LittleEndian, &magic); err != nil {
+		return nil, fmt.Errorf("ano: inspect read magic: %w", err)
+	}
+
+	info := &CapFileInfo{Path: path, Magic: magic}
+
+	switch magic {
+	case PCAP_MAGIC, PCAP_SWAPPED_MAGIC:
+		f.Seek(0, 0)
+		pr, err := NewPcapReader(f)
+		if err == nil {
+			info.Variant = pr.Variant
+			info.Version = pr.Header.VersionMajor
+			info.SnapLen = pr.Header.SnapLen
+			info.LinkType = pr.Header.Network
+		}
+		info.Format = info.Variant.String()
+		f.Seek(24, 0)
+		count, _ := countPcapPackets(f, info.Magic)
+		info.NumPackets = count
+	case PCAP_NSEC_MAGIC, PCAP_SWAPPED_NSEC_MAGIC:
+		f.Seek(0, 0)
+		pr, err := NewPcapReader(f)
+		if err == nil {
+			info.Variant = PcapNSec
+			info.Version = pr.Header.VersionMajor
+			info.SnapLen = pr.Header.SnapLen
+			info.LinkType = pr.Header.Network
+		}
+		info.Format = "nsecpcap"
+		f.Seek(24, 0)
+		count, _ := countPcapPackets(f, info.Magic)
+		info.NumPackets = count
+	case PCAP_MODIFIED_MAGIC, PCAP_SWAPPED_MOD_MAGIC:
+		f.Seek(0, 0)
+		pr, err := NewPcapReader(f)
+		if err == nil {
+			info.Variant = PcapModified
+			info.Version = pr.Header.VersionMajor
+			info.SnapLen = pr.Header.SnapLen
+			info.LinkType = pr.Header.Network
+		}
+		info.Format = "modpcap"
+		f.Seek(24, 0)
+		count, _ := countPcapPackets(f, info.Magic)
+		info.NumPackets = count
+	case PCAP_NOKIA_MAGIC:
+		f.Seek(0, 0)
+		pr, err := NewPcapReader(f)
+		if err == nil {
+			info.Variant = PcapNokia
+			info.Version = pr.Header.VersionMajor
+			info.SnapLen = pr.Header.SnapLen
+			info.LinkType = pr.Header.Network
+		}
+		info.Format = "nokiapcap"
+		f.Seek(24, 0)
+		count, _ := countPcapPackets(f, info.Magic)
+		info.NumPackets = count
+	case capMagic:
+		info.Format = "cap"
+		info.Variant = PcapStandard
+		var hdr capHeader
+		f.Seek(0, 0)
+		binary.Read(f, binary.LittleEndian, &hdr)
+		info.Version = hdr.Version
+		info.SnapLen = hdr.SnapLen
+		info.LinkType = hdr.LinkType
+		f.Seek(0, 0)
+		count, _ := countCapPackets(f)
+		info.NumPackets = count
+	default:
+		info.Format = "unknown"
+		info.Variant = PcapStandard
+		f.Seek(0, 0)
+		count, err := countPcapPackets(f, magic)
+		if err == nil {
+			info.Format = "pcap"
+			info.NumPackets = count
+		}
+	}
+
+	return info, nil
+}
+
+func countCapPackets(f *os.File) (int, error) {
+	var hdr capHeader
+	if err := binary.Read(f, binary.LittleEndian, &hdr); err != nil {
+		return 0, err
+	}
+	count := 0
+	for {
+		var rec capRecord
+		if err := binary.Read(f, binary.LittleEndian, &rec); err != nil {
+			break
+		}
+		f.Seek(int64(rec.InclLen), 1)
+		count++
+	}
+	return count, nil
+}
+
+func countPcapPackets(f *os.File, magic uint32) (int, error) {
+	order := pcapByteOrder(magic)
+	count := 0
+	for {
+		var sec, usec, inclLen, origLen uint32
+		if err := binary.Read(f, order, &sec); err != nil {
+			break
+		}
+		if err := binary.Read(f, order, &usec); err != nil {
+			break
+		}
+		if err := binary.Read(f, order, &inclLen); err != nil {
+			break
+		}
+		if err := binary.Read(f, order, &origLen); err != nil {
+			break
+		}
+		f.Seek(int64(inclLen), 1)
+		count++
+	}
+	return count, nil
+}
+
+func (ci *CapFileInfo) String() string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "文件: %s\n", ci.Path)
+	fmt.Fprintf(&b, "格式: %s\n", ci.Format)
+	fmt.Fprintf(&b, "Magic: 0x%08X\n", ci.Magic)
+	if ci.Version > 0 {
+		fmt.Fprintf(&b, "版本: %d\n", ci.Version)
+	}
+	if ci.NumPackets > 0 {
+		fmt.Fprintf(&b, "数据包数量: %d\n", ci.NumPackets)
+	}
+	if ci.SnapLen > 0 {
+		fmt.Fprintf(&b, "捕获长度: %d\n", ci.SnapLen)
+	}
+	if ci.LinkType > 0 {
+		fmt.Fprintf(&b, "链路类型: %d\n", ci.LinkType)
+	}
+	return b.String()
 }
