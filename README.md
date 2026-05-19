@@ -39,9 +39,11 @@ C:\User\用户名\go\pkg\mod\github.com\xiguayiqiu\gyscan_code@哈希校验码\d
 | [ano](#ano)                              | 网络协议操作库（数据包构造/发送/嗅探）        | Scapy           |
 | [api](#api)                              | API 资产发现（被动流量/前端解析/主动探测）    | —               |
 | [binary_stream](#binary_stream)         | 二进制流操作库（文件编辑/协议解析/链式操作）     | —               |
+| [encoding](#encoding)                    | 编码解码开发库（Base/URL/Hex/古典密码/JS混淆） | —               |
 | [format_conversion](#format_conversion) | 文件格式转换库（图片/音频/视频/文档互转）      | —               |
 | [httpclient](#httpclient)                | 模拟真实浏览器的 HTTP 请求库           | Python requests |
 | [passwd](#passwd)                        | 密码生成（随机/社工/CUPP 字典）         | —               |
+| [payload](#payload)                      | 安全测试 Payload 库（XSS/WAF绕过/指纹/弱口令） | —               |
 | [scanner](#scanner)                      | 扫描模块（子域名/目录/端口）             | —               |
 | [secjson](#secjson)                      | 敏感 JSON 分析（识别/脱敏/合规）        | —               |
 | [sqlexp](#sqlexp)                        | SQL 注入利用（Payload 生成/WAF 绕过） | —               |
@@ -221,6 +223,57 @@ binary.Read(s, binary.BigEndian, &header)
 | 位置管理  | 手动维护 offset              | `.SetPos()` / `.Seek()`             |
 | 文件操作  | 手动 Read/Write            | `.SaveToFile()` / `.LoadFromFile()` |
 | 编辑操作  | 需手动实现                    | Patch/Insert/Delete/Replace         |
+
+***
+
+## encoding
+
+网络安全渗透测试中的编码解码开发库，提供 Base 家族、URL、Hex、HTML 实体、古典密码以及 JS 混淆编码等功能。
+
+### 引入
+
+```go
+import "github.com/xiguayiqiu/gyscan_code/encoding"
+```
+
+### 快速开始
+
+```go
+// Base 家族编码
+b16 := encoding.Base16Encode([]byte("hello"))       // "68656c6c6f"
+b64 := encoding.Base64Encode([]byte("hello"))       // "aGVsbG8="
+b85 := encoding.Base85Encode([]byte("hello"))       // "BOu!rDZ"
+
+// URL 编码
+enc := encoding.URLEncode("hello world")             // "hello+world"
+enc = encoding.URLComponentEncode("/path/to/file")   // "/path/to/file"
+
+// Hex 编码（支持 0x 前缀、大小写、空格等自动识别）
+hex := encoding.HexEncode([]byte{0xDE, 0xAD})        // "dead"
+dec, _ := encoding.HexDecode("0xDEADBEEF")           // 自动去除 0x 前缀
+
+// HTML 实体编码
+html := encoding.HTMLEntityEncode("<script>alert(1)</script>")
+// &lt;script&gt;alert(1)&lt;/script&gt;
+
+// 古典密码
+caesar := encoding.CaesarEncode("Hello", 3)          // "Khoor"
+all := encoding.CaesarBruteForce("Khoor")             // 暴力破解 26 个偏移
+vigenere := encoding.VigenereEncode("HELLO", "KEY")   // "RIJVS"
+rail := encoding.RailFenceEncode("HELLOWORLD", 3)     // "HOLELWRDLO"
+
+// JS 混淆编码
+jother := encoding.JotherEncode("test")               // Jother 编码
+jsfuck := encoding.JSFuckEncode("alert(1)")           // JSFuck 编码
+```
+
+### 核心特性
+
+- **Base 家族**：Base16 / Base32 / Base32Hex / Base64 / Base64URL / Base85 编码解码
+- **URL/Hex 编码**：QueryEscape / PathEscape / Hex（支持 0x 前缀、分隔符）
+- **HTML 实体编码**：转义/反转义，支持全字符编码
+- **古典密码**：凯撒密码（含暴力破解）/ 维吉尼亚密码 / 栅栏密码（基础型 & W 型）
+- **JS 混淆**：Jother（8 字符编码）/ JSFuck（6 字符编码）编码解码
 
 ***
 
@@ -415,6 +468,55 @@ passwd.LeetSpeak("password") // "p4ssw0rd"
 passwd.Capitalize("hello")   // "Hello"
 passwd.Reverse("hello")      // "olleh"
 ```
+
+***
+
+## payload
+
+安全测试 Payload 库，提供 XSS、WAF 绕过、浏览器指纹、目录扫描防御绕过和弱口令的 Payload 集合，总计 **3085** 条。
+
+### 引入
+
+```go
+import "github.com/xiguayiqiu/gyscan_code/payload"
+```
+
+### 快速开始
+
+```go
+// XSS Payload
+htmlPayloads := payload.XSSByContext(payload.XSSHTML)
+svgPayloads := payload.XSSByContext(payload.XSSSVG)
+allXSS := payload.XSSStrings()
+
+// WAF 绕过 Payload（9 种 WAF 类型 + 13 种绕过技术）
+cfPayloads := payload.WAFBypassStrings(payload.WAFCloudflare)
+allWAF := payload.WAFBypassAllStrings()
+
+// 浏览器指纹 Payload（40+ 指纹维度）
+canvasPayloads := payload.FingerprintCanvasStrings()
+allFP := payload.FingerprintAllStrings()
+
+// 目录扫描防御绕过（12 种绕过类型 + 常用路径）
+uaList := payload.DirUserAgentBypassStrings()
+encList := payload.DirEncodingBypassStrings()
+
+// Top1000 弱口令
+pwList := payload.PwPayloadStrings()
+
+// 总数
+total := payload.TotalCount() // 3085
+```
+
+### Payload 覆盖
+
+| 分类 | 数量 | 说明 |
+|------|------|------|
+| XSS | 529 | HTML/Attribute/Script/SVG/CSS/URL 等 12 种上下文 |
+| WAF Bypass | 538 | Cloudflare/AWS/ModSecurity 等 9 种 WAF + SSTI/XXE/HTTP走私 |
+| 浏览器指纹 | 506 | Canvas/WebGL/WebGPU/Audio/Font/WebRTC 等 40+ 维度 |
+| 目录扫描绕过 | 512 | UserAgent/Header/编码/路径混淆/HTTP方法 等 12 种绕过 |
+| 弱口令 | 1000 | Top1000 常见弱口令（数字/键盘/单词/人名/品牌） |
 
 ***
 
