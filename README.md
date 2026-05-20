@@ -49,6 +49,7 @@ C:\User\用户名\go\pkg\mod\github.com\xiguayiqiu\gyscan_code@哈希校验码\d
 | [sqlexp](#sqlexp)                        | SQL 注入利用（Payload 生成/WAF 绕过） | —               |
 | [utils](#utils)                          | 通用工具函数（进度条等）                | —               |
 | [webshell](#webshell)                    | Webshell 生成与上传              | —               |
+| [bluez](#bluez)                        | 蓝牙安全渗透测试（CSR设备/四层攻击）  | —               |
 
 ***
 
@@ -715,6 +716,73 @@ webshell.Upload("http://target.com/upload.php", code)
 webshell.UploadWithField("http://target.com/upload.php", code, "shell.php", "file")
 webshell.UploadViaPUT("http://target.com/shell.php", code)
 ```
+
+***
+
+## bluez
+
+蓝牙安全渗透测试库，用于操作 CSR 蓝牙设备，覆盖物理层、链路层、主机层和社会工程层四个层次的安全攻防功能。
+
+### 引入
+
+```go
+import "github.com/xiguayiqiu/gyscan_code/bluez"
+```
+
+### 快速开始
+
+```go
+// 扫描附近设备
+bz := bluez.New()
+result := bz.Scan()
+
+// 安全审计
+report := bz.SecurityAudit()
+
+// BLE扫描
+ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+defer cancel()
+bleDevices, _ := bz.Context(ctx).BLEScan()
+```
+
+### 安全模式
+
+库默认运行在 **SAFE 模式**，所有主动攻击功能被锁定。需要显式启用红队模式才能使用攻击函数：
+
+```go
+// 环境变量
+export BLUEZ_BYPASS_LEGAL=IAcceptFullLegalResponsibility
+
+// 或代码调用
+bluez.EnableRedTeam("IAcceptFullLegalResponsibility")
+
+// 审计日志
+entries := bluez.GetAuditLog()
+integrity := bluez.VerifyAuditIntegrity()
+```
+
+### 覆盖的攻击类型
+
+| 协议层 | 攻击 |
+|--------|------|
+| **物理层** | RF 嗅探、RSSI 位置追踪、DoS 洪水攻击 |
+| **链路层** | KNOB 密钥协商攻击、BIAS 身份欺骗、MITM 中间人、重放攻击 |
+| **主机层** | BlueBorne 漏洞检测、Bluesnarfing 数据窃取、Bluebugging 设备劫持、固件篡改探测 |
+| **社会工程** | Bluejacking 钓鱼消息、弱 PIN 暴力破解、可发现设备风险分析 |
+| **BLE 5.3/5.4** | Just Works 绕过、Passkey 暴力破解、密钥重装攻击、GATT 服务发现 |
+
+### 核心特性
+
+- **双模式设计**：MODE_SAFE（默认）/ MODE_RED_TEAM，攻击函数需显式解锁
+- **审计日志**：不可篡改的 SHA256 签名日志，支持完整性验证
+- **BDAddr 隐私保护**：MAC 地址默认脱敏显示，仅 Verbose 模式显示完整地址
+- **Context 支持**：所有长时间运行操作支持 context.Context 优雅取消
+- **BLE 5.3/5.4**：主动/被动扫描、GATT 服务发现、三种 BLE 配对攻击
+- **统一链式 API**：`bluez.New().Target().Timeout().Verbose().Scan()`
+
+### 完整文档
+
+详细 API 文档和使用示例请参阅 [docs/bluez.md](docs/bluez.md)。
 
 ***
 

@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "encoding.md",
+                "file": "bluez.md",
                 "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "encoding"
+              "title": "bluez"
             }
           }
         ]
@@ -78,7 +78,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "right": {
     "id": "a8eb4c08b42c577e",
@@ -185,6 +186,7 @@
   },
   "active": "98569fc9de58202f",
   "lastOpenFiles": [
+    "encoding.md",
     "binary_stream.md",
     "sqlexp.md",
     "ano.md",
