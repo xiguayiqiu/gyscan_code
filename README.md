@@ -2,9 +2,9 @@
 
 Go 语言编写的网络安全开发库，支持 Windows、macOS 和 Linux 平台，采用模块化设计。
 
-!\[Go Version]\(https\://img.shields.io/badge/Go-1.26%2B-blue null)
-!\[License]\(https\://img.shields.io/badge/License-Apache%202.0-green null)
-!\[Platform]\(https\://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey null)
+![Go Version](https://img.shields.io/badge/Go-1.26%2B-blue)
+![License](https://img.shields.io/badge/License-Apache%202.0-green)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
 
 ### 这个Go语言库希望有更多的Go开发者，与我共同开发这个开发库！欢迎`issues` \~\~
 
