@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "bluez.md",
+                "file": "hcx.md",
                 "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "bluez"
+              "title": "hcx"
             }
           }
         ]
@@ -78,8 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "right": {
     "id": "a8eb4c08b42c577e",
@@ -186,6 +185,10 @@
   },
   "active": "98569fc9de58202f",
   "lastOpenFiles": [
+    "wifie.md",
+    "hcx.md",
+    "wifie-crack-extension.md",
+    "bluez.md",
     "encoding.md",
     "binary_stream.md",
     "sqlexp.md",

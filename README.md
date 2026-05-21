@@ -1,12 +1,12 @@
-# gyscan_code
+# gyscan\_code
 
 Go 语言编写的网络安全开发库，支持 Windows、macOS 和 Linux 平台，采用模块化设计。
 
-![Go Version](https://img.shields.io/badge/Go-1.26%2B-blue)
-![License](https://img.shields.io/badge/License-Apache%202.0-green)
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
+!\[Go Version]\(https\://img.shields.io/badge/Go-1.26%2B-blue null)
+!\[License]\(https\://img.shields.io/badge/License-Apache%202.0-green null)
+!\[Platform]\(https\://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey null)
 
-### 这个Go语言库希望有更多的Go开发者，与我共同开发这个开发库！欢迎`issues` ~~
+### 这个Go语言库希望有更多的Go开发者，与我共同开发这个开发库！欢迎`issues` \~\~
 
 ## 安装
 
@@ -16,7 +16,7 @@ go get github.com/xiguayiqiu/gyscan_code
 
 ## 文档位置
 
-### 通过以下位置即可看到每个库的使用方法，后续本作者会补齐`gyscan_code`的goDoc的~
+### 通过以下位置即可看到每个库的使用方法，后续本作者会补齐`gyscan_code`的goDoc的\~
 
 注意：`ShellCode()`函数对Windows是零兼容！所以无法在Windows系统中使用`ShellCode()`函数，原因是这个库主要是给Linux系统和Macos做的！当然其他除`Shellcode()`函数之外全部都可以在Windows系统使用
 
@@ -34,22 +34,24 @@ C:\User\用户名\go\pkg\mod\github.com\xiguayiqiu\gyscan_code@哈希校验码\d
 
 ## 模块总览
 
-| 模块                                       | 说明                          | 对标              |
-| ---------------------------------------- | --------------------------- | --------------- |
-| [ano](#ano)                              | 网络协议操作库（数据包构造/发送/嗅探）        | Scapy           |
-| [api](#api)                              | API 资产发现（被动流量/前端解析/主动探测）    | —               |
-| [binary_stream](#binary_stream)         | 二进制流操作库（文件编辑/协议解析/链式操作）     | —               |
-| [encoding](#encoding)                    | 编码解码开发库（Base/URL/Hex/古典密码/JS混淆） | —               |
-| [format_conversion](#format_conversion) | 文件格式转换库（图片/音频/视频/文档互转）      | —               |
-| [httpclient](#httpclient)                | 模拟真实浏览器的 HTTP 请求库           | Python requests |
-| [passwd](#passwd)                        | 密码生成（随机/社工/CUPP 字典）         | —               |
+| 模块                                       | 说明                               | 对标              |
+| ---------------------------------------- | -------------------------------- | --------------- |
+| [ano](#ano)                              | 网络协议操作库（数据包构造/发送/嗅探）             | Scapy           |
+| [api](#api)                              | API 资产发现（被动流量/前端解析/主动探测）         | —               |
+| [binary\_stream](#binary_stream)         | 二进制流操作库（文件编辑/协议解析/链式操作）          | —               |
+| [encoding](#encoding)                    | 编码解码开发库（Base/URL/Hex/古典密码/JS混淆）  | —               |
+| [format\_conversion](#format_conversion) | 文件格式转换库（图片/音频/视频/文档互转）           | —               |
+| [httpclient](#httpclient)                | 模拟真实浏览器的 HTTP 请求库                | Python requests |
+| [passwd](#passwd)                        | 密码生成（随机/社工/CUPP 字典）              | —               |
 | [payload](#payload)                      | 安全测试 Payload 库（XSS/WAF绕过/指纹/弱口令） | —               |
-| [scanner](#scanner)                      | 扫描模块（子域名/目录/端口）             | —               |
-| [secjson](#secjson)                      | 敏感 JSON 分析（识别/脱敏/合规）        | —               |
-| [sqlexp](#sqlexp)                        | SQL 注入利用（Payload 生成/WAF 绕过） | —               |
-| [utils](#utils)                          | 通用工具函数（进度条等）                | —               |
-| [webshell](#webshell)                    | Webshell 生成与上传              | —               |
-| [bluez](#bluez)                        | 蓝牙安全渗透测试（CSR设备/四层攻击）  | —               |
+| [scanner](#scanner)                      | 扫描模块（子域名/目录/端口）                  | —               |
+| [secjson](#secjson)                      | 敏感 JSON 分析（识别/脱敏/合规）             | —               |
+| [sqlexp](#sqlexp)                        | SQL 注入利用（Payload 生成/WAF 绕过）      | —               |
+| [utils](#utils)                          | 通用工具函数（进度条等）                     | —               |
+| [webshell](#webshell)                    | Webshell 生成与上传                   | —               |
+| [wifie](#wifie)                          | WiFi 安全渗透测试（扫描/抓包/握手捕获/GPU 破解）   | aircrack-ng     |
+| [hcx](#hcx)                              | Cap/pcap 转 HC22000（WPA 哈希格式）     | hcxpcapngtool   |
+| [bluez](#bluez) **[\[测试状态\]](#bluez)**   | 蓝牙安全渗透测试（CSR设备/四层攻击）             | —               |
 
 ***
 
@@ -153,7 +155,7 @@ api.SaveReport("example.com", result.Endpoints, "report.json")
 
 ***
 
-## binary_stream
+## binary\_stream
 
 二进制流操作库，通过二进制流将数据生成对应文件，以及对文件进行二进制编辑。实现 `io.Reader` / `io.Writer` / `io.Seeker` / `io.Closer` 标准库接口，无缝对接 `io.Copy`、`encoding/binary` 等所有标准库函数。支持大端/小端字节序、多类型数据读写和链式流操作。
 
@@ -217,7 +219,7 @@ binary.Read(s, binary.BigEndian, &header)
 
 ### 对比 unsafe binary
 
-| 操作    | unsafe binary            | binary_stream                      |
+| 操作    | unsafe binary            | binary\_stream                      |
 | ----- | ------------------------ | ----------------------------------- |
 | 字节序切换 | 手动 `binary.LittleEndian` | `.SetOrder()` 链式设置                  |
 | 错误处理  | 手动检查 error               | `.Error()` / `.Must()`              |
@@ -278,7 +280,7 @@ jsfuck := encoding.JSFuckEncode("alert(1)")           // JSFuck 编码
 
 ***
 
-## format_conversion
+## format\_conversion
 
 文件格式转换库，基于 `binary_stream` 和 `ffmpeg-go` / `pandoc` 实现图片、音频、视频、文档文件格式之间的互转。通过魔数检测自动识别源格式，支持文件级和字节级转换。
 
@@ -317,29 +319,29 @@ if !format_conversion.IsPandocAvailable() {
 
 ### 依赖要求
 
-| 工具 | 用途 | Linux | macOS | Windows |
-|------|------|-------|-------|---------|
+| 工具         | 用途           | Linux                     | macOS                 | Windows                 |
+| ---------- | ------------ | ------------------------- | --------------------- | ----------------------- |
 | **ffmpeg** | 音频/视频/GIF 转换 | `sudo apt install ffmpeg` | `brew install ffmpeg` | `winget install ffmpeg` |
-| **pandoc** | 文档格式转换 | `sudo apt install pandoc` | `brew install pandoc` | `winget install pandoc` |
+| **pandoc** | 文档格式转换       | `sudo apt install pandoc` | `brew install pandoc` | `winget install pandoc` |
 
 > 图片转换（PNG/JPG/BMP/ICO/WEBP）使用 Go 原生实现，无需额外依赖。Windows 用户运行 ShellCode 时会自动检测缺失组件并提示安装方式。
 
 ### 支持的格式
 
-| 类型 | 格式 |
-| -- | --- |
-| 图片 | PNG, JPG/JPEG, BMP, ICO, WEBP, GIF |
-| 音频 | WAV, MP3, OGG |
-| 视频 | MP4, MOV |
+| 类型 | 格式                                            |
+| -- | --------------------------------------------- |
+| 图片 | PNG, JPG/JPEG, BMP, ICO, WEBP, GIF            |
+| 音频 | WAV, MP3, OGG                                 |
+| 视频 | MP4, MOV                                      |
 | 文档 | Markdown, DOC, DOCX, ODT, HTML, RTF, PDF, TXT |
 
 ### 支持的转换路径
 
-| 类型 | 转换 |
-| -- | --- |
-| 图片 | PNG ↔ BMP, PNG → JPG, JPG → PNG, PNG/JPG → ICO, PNG/JPG → WEBP |
-| 音频 | WAV ↔ MP3, WAV ↔ OGG, MP3 ↔ OGG |
-| 视频 | MP4 ↔ MOV（容器转换，无损）, 视频 → GIF, 视频 → 音频 |
+| 类型 | 转换                                                                       |
+| -- | ------------------------------------------------------------------------ |
+| 图片 | PNG ↔ BMP, PNG → JPG, JPG → PNG, PNG/JPG → ICO, PNG/JPG → WEBP           |
+| 音频 | WAV ↔ MP3, WAV ↔ OGG, MP3 ↔ OGG                                          |
+| 视频 | MP4 ↔ MOV（容器转换，无损）, 视频 → GIF, 视频 → 音频                                    |
 | 文档 | Markdown ↔ DOCX/ODT/HTML/RTF/TXT, DOC → DOCX/ODT/HTML/RTF/TXT, PDF → TXT |
 
 > **注意**：pandoc 不支持输出 `.doc` 格式，请使用 `.docx` 代替。PDF 输出需要 `wkhtmltopdf` 等 PDF 引擎。
@@ -511,13 +513,13 @@ total := payload.TotalCount() // 3085
 
 ### Payload 覆盖
 
-| 分类 | 数量 | 说明 |
-|------|------|------|
-| XSS | 529 | HTML/Attribute/Script/SVG/CSS/URL 等 12 种上下文 |
-| WAF Bypass | 538 | Cloudflare/AWS/ModSecurity 等 9 种 WAF + SSTI/XXE/HTTP走私 |
-| 浏览器指纹 | 506 | Canvas/WebGL/WebGPU/Audio/Font/WebRTC 等 40+ 维度 |
-| 目录扫描绕过 | 512 | UserAgent/Header/编码/路径混淆/HTTP方法 等 12 种绕过 |
-| 弱口令 | 1000 | Top1000 常见弱口令（数字/键盘/单词/人名/品牌） |
+| 分类         | 数量   | 说明                                                     |
+| ---------- | ---- | ------------------------------------------------------ |
+| XSS        | 529  | HTML/Attribute/Script/SVG/CSS/URL 等 12 种上下文            |
+| WAF Bypass | 538  | Cloudflare/AWS/ModSecurity 等 9 种 WAF + SSTI/XXE/HTTP走私 |
+| 浏览器指纹      | 506  | Canvas/WebGL/WebGPU/Audio/Font/WebRTC 等 40+ 维度         |
+| 目录扫描绕过     | 512  | UserAgent/Header/编码/路径混淆/HTTP方法 等 12 种绕过               |
+| 弱口令        | 1000 | Top1000 常见弱口令（数字/键盘/单词/人名/品牌）                          |
 
 ***
 
@@ -643,11 +645,11 @@ requests := e.BuildRequests()   // URL 编码后的完整请求
 | 注入方法     | 数据库                          | 覆盖技术                                    |
 | -------- | ---------------------------- | --------------------------------------- |
 | 报错注入     | MySQL/PG/MSSQL/Oracle/SQLite | EXTRACTVALUE/CAST/CONVERT 等             |
-| Union 注入 | MySQL/PG/MSSQL               | 列数探测、information_schema/pg_catalog 枚举 |
+| Union 注入 | MySQL/PG/MSSQL               | 列数探测、information\_schema/pg\_catalog 枚举 |
 | 布尔盲注     | MySQL/MSSQL                  | 真假条件、SUBSTRING/ASCII 提取                 |
-| 延时盲注     | MySQL/PG/MSSQL/Oracle/SQLite | SLEEP/pg_sleep/WAITFOR/DBMS_LOCK      |
-| 堆叠查询     | MySQL/MSSQL/PG               | INSERT/DELETE/WRITE/xp_cmdshell        |
-| OOB 外带   | MySQL/MSSQL/Oracle/PG        | LOAD_FILE/xp_dirtree/UTL_HTTP        |
+| 延时盲注     | MySQL/PG/MSSQL/Oracle/SQLite | SLEEP/pg\_sleep/WAITFOR/DBMS\_LOCK      |
+| 堆叠查询     | MySQL/MSSQL/PG               | INSERT/DELETE/WRITE/xp\_cmdshell        |
+| OOB 外带   | MySQL/MSSQL/Oracle/PG        | LOAD\_FILE/xp\_dirtree/UTL\_HTTP        |
 | WAF 绕过   | 8 种策略                        | 内联注释/大小写/URL编码/Hex/空白/关键字拆分等            |
 
 ***
@@ -763,17 +765,17 @@ integrity := bluez.VerifyAuditIntegrity()
 
 ### 覆盖的攻击类型
 
-| 协议层 | 攻击 |
-|--------|------|
-| **物理层** | RF 嗅探、RSSI 位置追踪、DoS 洪水攻击 |
-| **链路层** | KNOB 密钥协商攻击、BIAS 身份欺骗、MITM 中间人、重放攻击 |
-| **主机层** | BlueBorne 漏洞检测、Bluesnarfing 数据窃取、Bluebugging 设备劫持、固件篡改探测 |
-| **社会工程** | Bluejacking 钓鱼消息、弱 PIN 暴力破解、可发现设备风险分析 |
-| **BLE 5.3/5.4** | Just Works 绕过、Passkey 暴力破解、密钥重装攻击、GATT 服务发现 |
+| 协议层             | 攻击                                                       |
+| --------------- | -------------------------------------------------------- |
+| **物理层**         | RF 嗅探、RSSI 位置追踪、DoS 洪水攻击                                 |
+| **链路层**         | KNOB 密钥协商攻击、BIAS 身份欺骗、MITM 中间人、重放攻击                      |
+| **主机层**         | BlueBorne 漏洞检测、Bluesnarfing 数据窃取、Bluebugging 设备劫持、固件篡改探测 |
+| **社会工程**        | Bluejacking 钓鱼消息、弱 PIN 暴力破解、可发现设备风险分析                    |
+| **BLE 5.3/5.4** | Just Works 绕过、Passkey 暴力破解、密钥重装攻击、GATT 服务发现              |
 
 ### 核心特性
 
-- **双模式设计**：MODE_SAFE（默认）/ MODE_RED_TEAM，攻击函数需显式解锁
+- **双模式设计**：MODE\_SAFE（默认）/ MODE\_RED\_TEAM，攻击函数需显式解锁
 - **审计日志**：不可篡改的 SHA256 签名日志，支持完整性验证
 - **BDAddr 隐私保护**：MAC 地址默认脱敏显示，仅 Verbose 模式显示完整地址
 - **Context 支持**：所有长时间运行操作支持 context.Context 优雅取消
@@ -783,6 +785,155 @@ integrity := bluez.VerifyAuditIntegrity()
 ### 完整文档
 
 详细 API 文档和使用示例请参阅 [docs/bluez.md](docs/bluez.md)。
+
+***
+
+## wifie
+
+WiFi 安全渗透测试库，支持 macOS 和 Linux。提供 WiFi 扫描、抓包、握手捕获和安全测试功能，支持 CPU 多协程、CUDA GPU 和 OpenCL GPU 三种模式进行 WPA/WPA2 握手穷举破解。
+
+### 引入
+
+```go
+import "github.com/xiguayiqiu/gyscan_code/wifie"
+```
+
+### 快速开始
+
+```go
+// 列出 WiFi 接口
+ifs, _ := wifie.ListWiFiInterfaces()
+fmt.Println(ifs)
+
+// 启动监听模式
+wifie.SetMonitorMode("wlan0", 6)
+
+// 扫描附近网络
+nets, _ := wifie.ScanNetworks("wlan0")
+for _, n := range nets {
+    fmt.Printf("%s (%s) signal=%d dBm\n", n.SSID, n.BSSID, n.Signal)
+}
+
+// 抓取 WPA 握手
+result := wifie.CaptureHandshake("wlan0", "MyWiFi", "aa:bb:cc:dd:ee:ff", 60*time.Second)
+if result.HandshakeCaptured {
+    fmt.Println("握手捕获成功")
+    result.PCAP.SaveToFile("handshake.cap")
+}
+
+// GPU 破解握手
+cracked := wifie.CrackHandshakeCUDA("handshake.cap", "passwords.txt")
+fmt.Printf("破解结果: %v\n", cracked)
+```
+
+### 核心特性
+
+- **WiFi 扫描**：信道遍历、ESSID 探测、信号强度、加密方式识别
+- **监听模式**：自动设卡监听模式、信道跳转配置
+- **握手捕获**：EAPOL 消息监听、4 次握手检测、M1/M2/M3/M4 状态追踪
+- **GPU 破解**：CUDA / OpenCL / CPU 三种后端，PMKID 快速破解
+- **PCAP 操作**：pcap 文件读取、握手帧提取、握手会话保存
+
+### 对比 hcxtools
+
+| 功能     | hcxtools        | wifie                                         |
+| ------ | --------------- | --------------------------------------------- |
+| 握手捕获   | `hcxdumptool`   | `CaptureHandshake`                            |
+| 格式转换   | `hcxpcapngtool` | `wifie` + `hcx` 联合使用                          |
+| GPU 破解 | `hashcat`       | `CrackHandshakeCUDA` / `CrackHandshakeOpenCL` |
+| 平台     | Linux only      | macOS + Linux                                 |
+
+完整 API 文档请参阅 [docs/wifie.md](docs/wifie.md)。
+
+***
+
+## hcx
+
+Cap/pcap/pcapng 转 HC22000（WPA/WPA2 哈希格式）开发库，输出结果与 `hcxpcapngtool` 完全一致。
+
+### 引入
+
+```go
+import "github.com/xiguayiqiu/gyscan_code/hcx"
+```
+
+### 快速开始
+
+```go
+// 转换 cap 文件
+result, err := hcx.ConvertCapToHC22000("capture.cap")
+if err != nil {
+    fmt.Printf("Error: %v\n", err)
+    return
+}
+
+fmt.Printf("EAPOL: %d (M1=%d M2=%d M3=%d M4=%d)\n",
+    result.Stats.EAPOLMsgCount,
+    result.Stats.EAPOLM1Count, result.Stats.EAPOLM2Count,
+    result.Stats.EAPOLM3Count, result.Stats.EAPOLM4Count)
+fmt.Printf("Handshakes: %d, PMKIDs: %d\n",
+    result.Stats.EAPOLMPCount, result.Stats.PMKIDCount)
+
+for _, line := range hcx.FormatAllHashLines(result, false) {
+    fmt.Print(line)
+}
+```
+
+### 命令行工具
+
+```bash
+# 输出纯哈希到 stdout
+go run examples/hcx/main.go capture.cap
+
+# 重定向到文件
+go run examples/hcx/main.go capture.cap > output.hc22000
+
+# 指定输出文件
+go run examples/hcx/main.go capture.cap output.hc22000
+```
+
+```bash
+# 直接用于 hashcat
+hashcat -m 22000 output.hc22000 wordlist.txt
+```
+
+### HC22000 格式
+
+```
+WPA*02*<MIC:32hex>*<MAC_AP:12hex>*<MAC_CLIENT:12hex>*<ESSID:hex>*<ANONCE:64hex>*<EAPOL_DATA:hex>*<MESSAGEPAIR:2hex>
+```
+
+### 支持的输入格式
+
+| 格式     | 说明                                         |
+| ------ | ------------------------------------------ |
+| PCAP   | libpcap（小端 `0xa1b2c3d4` / 大端 `0xd4c3b2a1`） |
+| PCAPNG | pcap next generation（`0x0a0d0d0a`）         |
+| CAP    | 旧版 cap 格式                                  |
+
+### 支持的链路类型
+
+- `LINKTYPE_IEEE802_11` (105): 原始 802.11 帧
+- `LINKTYPE_IEEE802_11_RADIOTAP` (127): 带 Radiotap 头的 802.11 帧
+
+### 握手对优先级
+
+| 优先级 | 类型    | 说明                              |
+| --- | ----- | ------------------------------- |
+| 1   | M12E2 | ANonce 来自 M1，EAPOL 来自 M2（最高优先级） |
+| 2   | M32E2 | ANonce 来自 M3，EAPOL 来自 M2        |
+| 3   | M34E3 | ANonce 来自 M3，EAPOL 来自 M3        |
+| 4   | M14E4 | ANonce 来自 M1，EAPOL 来自 M4        |
+
+### 核心特性
+
+- **输出与 hcxpcapngtool 完全一致**：逐字段验证通过
+- **PMKID + EAPOL 双支持**：自动检测可用握手类型
+- **M12E2 优先**：与 hcxpcapngtool 相同优先级策略
+- **MIC 零值化**：EAPOL 数据中 MIC 位置自动清零
+- **FT-PSK 支持**：hash type 03/04 格式
+
+完整 API 文档请参阅 [docs/hcx.md](docs/hcx.md)。
 
 ***
 
